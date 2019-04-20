@@ -1,0 +1,49 @@
+{
+  "name": "ok-react-use-form",
+  "version": "1.0.0",
+  "description": "Easy-to-use React form hooks with built-in validation support",
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack-dev-server --mode development",
+    "transpile": "babel src -d dist --copy-files",
+    "prepublishOnly": "npm run transpile"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "form",
+    "validation"
+  ],
+  "author": "Artem Kuzko <a.kuzko@gmail.com> (https://github.com/akuzko)",
+  "homepage": "https://github.com/akuzko/ok-react-use-form",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.4.3",
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-proposal-export-default-from": "^7.2.0",
+    "@babel/preset-env": "^7.4.3",
+    "@babel/preset-react": "^7.0.0",
+    "babel-loader": "^8.0.5",
+    "css-loader": "^2.1.1",
+    "html-webpack-plugin": "^3.2.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "style-loader": "^0.23.1",
+    "webpack": "^4.30.0",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.3.1"
+  },
+  "dependencies": {
+    "lodash.get": "^4.4.2",
+    "update-js": "^1.7.1"
+  }
+}
