@@ -3,14 +3,21 @@ import _get from 'lodash.get';
 import update from 'update-js';
 import { callRuleValidator, callValueValidator } from './validations';
 
-export default function useForm(initialAttrs, validation) {
+export function useForm(initialAttrs, validation) {
+  const [attrs, setAttrs] = useState(initialAttrs);
+
   return validation === undefined ?
-    usePlainForm(initialAttrs) :
-    useValidatedForm(initialAttrs, validation);
+    usePlainForm(attrs, setAttrs) :
+    useValidatedForm(attrs, setAttrs, validation);
 }
 
-function usePlainForm(initialAttrs) {
-  const [attrs, setAttrs] = useState(initialAttrs);
+export function useControlledForm({attrs, onChange}, validation) {
+  return validation === undefined ?
+    usePlainForm(attrs, onChange) :
+    useValidatedForm(attrs, onChange, validation);
+}
+
+function usePlainForm(attrs, setAttrs) {
   const [errors, setErrors] = useState({});
 
   const get = path => path ? _get(attrs, path) : attrs;
@@ -39,8 +46,7 @@ function usePlainForm(initialAttrs) {
   return {get, set, getError, setError, input, $: input};
 }
 
-function useValidatedForm(initialAttrs, validationConfig) {
-  const [attrs, setAttrs] = useState(initialAttrs);
+function useValidatedForm(attrs, setAttrs, validationConfig) {
   const [errors, setErrors] = useState({});
   const [shouldValidateOnChange, setShouldValidateOnChange] = useState(false);
 

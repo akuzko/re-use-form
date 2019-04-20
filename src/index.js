@@ -1,2 +1,2 @@
-export useForm from './useForm';
+export * from './useForm';
 export * from './validations';

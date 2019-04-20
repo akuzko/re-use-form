@@ -12,7 +12,7 @@ defineValidations({
   }
 })
 
-const initialForm = {}
+const initialForm = {};
 
 export default function Form() {
   const [loading, setLoading] = useState(false);
@@ -23,6 +23,8 @@ export default function Form() {
   });
 
   const reset = () => set({});
+
+  const changeUsername = value => set('name', value.toUpperCase());
 
   const save = () => {
     setLoading(true);
@@ -41,7 +43,7 @@ export default function Form() {
       </div>
 
       <div>
-        <Input { ...$('name') } placeholder="Username" />
+        <Input { ...$('name', changeUsername) } placeholder="Username" />
       </div>
       <div>
         <Input { ...$('item.id') } placeholder="Item ID" />
