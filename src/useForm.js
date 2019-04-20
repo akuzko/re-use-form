@@ -3,8 +3,14 @@ import _get from 'lodash.get';
 import update from 'update-js';
 import { callRuleValidator, callValueValidator } from './validations';
 
-export default function useForm(initialState = {}) {
-  const [attrs, setAttrs] = useState(initialState);
+export default function useForm(initialAttrs, validation) {
+  return validation === undefined ?
+    usePlainForm(initialAttrs) :
+    useValidatedForm(initialAttrs, validation);
+}
+
+function usePlainForm(initialAttrs) {
+  const [attrs, setAttrs] = useState(initialAttrs);
   const [errors, setErrors] = useState({});
 
   const get = path => path ? _get(attrs, path) : attrs;
@@ -16,7 +22,7 @@ export default function useForm(initialState = {}) {
     }
   }
   const getError = path => errors[path];
-  const setError = (path, value) => setErrors({ ...errors, [path]: value });
+  const setError = (path, value) => setErrors({...errors, [path]: value});
   const input = (path, onChange) => {
     if (onChange === undefined) {
       onChange = value => set(path, value);
@@ -30,80 +36,89 @@ export default function useForm(initialState = {}) {
     };
   };
 
-  const helpers = { get, set, input, $: input, getError, setError, setErrors };
+  return {get, set, getError, setError, input, $: input};
+}
 
-  helpers.withValidation = (config) => {
-    if (typeof config === 'function') {
-      config = config(get);
+function useValidatedForm(initialAttrs, validationConfig) {
+  const [attrs, setAttrs] = useState(initialAttrs);
+  const [errors, setErrors] = useState({});
+  const [shouldValidateOnChange, setShouldValidateOnChange] = useState(false);
+
+  const get = path => path ? _get(attrs, path) : attrs;
+  const getError = path => errors[path];
+  const setError = (path, value) => setErrors({...errors, [path]: value});
+
+  if (typeof validationConfig === 'function') {
+    validationConfig = validationConfig(get);
+  }
+
+  const validateAttrs = (attributes, {onValid, onError} = {}) => {
+    const nextErrors = {};
+
+    Object.keys(validationConfig).forEach((name) => {
+      callRuleValidator(validationConfig, nextErrors, name, attributes);
+    });
+
+    const valid = Object.getOwnPropertyNames(nextErrors).length === 0;
+
+    setErrors(nextErrors);
+    setShouldValidateOnChange(true);
+    if (valid && onValid) {
+      onValid();
+    }
+    if (!valid && onError) {
+      onError(nextErrors);
+    }
+  };
+
+  const set = (name, value) => {
+    const nextAttrs = value === undefined ? name : update(attrs, name, value);
+    setAttrs(nextAttrs);
+
+    if (!shouldValidateOnChange) return;
+
+    if (typeof name === 'string' && !(typeof value === 'object') && !Array.isArray(value)) {
+      const error = callValueValidator(validationConfig, name, value);
+      return setError(name, error);
     }
 
-    const [shouldValidateOnChange, setShouldValidateOnChange] = useState(false);
+    validateAttrs(nextAttrs);
+  };
 
-    const validateAttrs = (attributes, { onValid, onError } = {}) => {
-      const nextErrors = {};
-
-      Object.keys(config).forEach((name) => {
-        callRuleValidator(config, nextErrors, name, attributes);
-      });
-
-      const valid = Object.getOwnPropertyNames(nextErrors).length === 0;
-
-      setErrors(nextErrors);
-      setShouldValidateOnChange(true);
-      if (valid && onValid) {
-        onValid();
-      }
-      if (!valid && onError) {
-        onError(nextErrors);
-      }
-    };
-
-    const validatedSet = (name, value) => {
-      const nextAttrs = value === undefined ? name : update(attrs, name, value);
-      setAttrs(nextAttrs);
-
-      if (!shouldValidateOnChange) return;
-
-      if (typeof name === 'string' && !(typeof value === 'object') && !Array.isArray(value)) {
-        const error = callValueValidator(config, name, value);
-        return setError(name, error);
-      }
-
-      validateAttrs(nextAttrs);
-    };
-
-    const validatedInput = (path, onChange) => {
-      if (onChange === undefined) {
-        onChange = value => validatedSet(path, value);
-      }
-
-      return { ...input(path), onChange };
-    };
-
-    const validate = (opts) => {
-      return validateAttrs(get(), opts);
-    };
-
-    const submitWith = handler => () => {
-      validate({
-        onValid() {
-          handler(get());
-        }
-      });
-    };
+  const input = (path, onChange) => {
+    if (onChange === undefined) {
+      onChange = value => set(path, value);
+    }
 
     return {
-      get,
-      set: validatedSet,
-      input: validatedInput,
-      $: validatedInput,
-      getError,
-      setError,
-      setErrors,
-      validate,
-      submitWith
+      value: get(path),
+      onChange,
+      error: errors[path],
+      name: path
     };
   };
 
-  return helpers;
+  const validate = (opts) => {
+    return validateAttrs(get(), opts);
+  };
+
+  const submitWith = handler => () => {
+    validate({
+      onValid() {
+        handler(get());
+      }
+    });
+  };
+
+  return {
+    get,
+    set,
+    input,
+    $: input,
+    getError,
+    setError,
+    setErrors,
+    validate,
+    submitWith
+  };
 }

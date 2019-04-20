@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Input from './Input';
+import Checkbox from './Checkbox';
 
 import { useForm, defineValidations } from '../../src';
 
@@ -11,27 +12,50 @@ defineValidations({
   }
 })
 
+const initialForm = {}
+
 export default function Form() {
-  const { $, get, set, validate } = useForm({}).withValidation({
+  const [loading, setLoading] = useState(false);
+  const [withValidation, setWithValidation] = useState(true);
+  const {$, get, set, setErrors, submitWith} = useForm(initialForm, withValidation && {
     'name': 'presence',
     'item.id': 'presence'
   });
 
   const reset = () => set({});
 
+  const save = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setErrors({'item.count': 'Not enough!'});
+    }, 2000);
+  };
+
+  const submit = withValidation ? submitWith(save) : save;
+
   return (
     <>
       <div>
-        <Input {...$('name')} placeholder="Username" />
+        <Checkbox value={ withValidation } onChange={ setWithValidation } label="Client Validation" />
+      </div>
+
+      <div>
+        <Input { ...$('name') } placeholder="Username" />
       </div>
       <div>
-        <Input {...$('item.id')} placeholder="Item ID" />
+        <Input { ...$('item.id') } placeholder="Item ID" />
       </div>
       <div>
-        <Input {...$('item.count')} placeholder="Item Count" />
+        <Input { ...$('item.count') } placeholder="Item Count" />
       </div>
-      <button onClick={reset}>Reset</button>
-      <button onClick={validate}>Submit</button>
+
+      { loading &&
+        <div>Loading...</div>
+      }
+
+      <button onClick={ reset }>Reset</button>
+      <button onClick={ submit }>Submit</button>
 
       <div>{ JSON.stringify(get()) }</div>
     </>
