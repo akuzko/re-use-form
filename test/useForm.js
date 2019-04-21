@@ -1,30 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { expect } from 'chai';
 import { mount } from 'enzyme';
 import sinon from 'sinon';
-import { useForm, defineValidations } from '../src';
+import { useForm, useControlledForm, defineValidations } from '../src';
 
 import Input from './components/Input';
 
-defineValidations({
-  presence(value) {
-    if (!value || (Array.isArray(value) && !value.length)) return "Can't be empty";
-  },
-  numericality(value, { lessThan }) {
-    if (!value) return;
-
-    if (+value >= lessThan) return `Should be less than ${lessThan}`;
-  }
-});
-
 describe('useForm', () => {
   function Form() {
-    const {$, validate} = useForm({foo: 'foo'});
+    const {$} = useForm({foo: 'foo'});
 
     return (
       <div>
         <Input { ...$('foo') } className="foo" />
-        <button onClick={ validate }>Validate</button>
       </div>
     );
   }
@@ -79,7 +67,40 @@ describe('useForm', () => {
     });
   });
 
+  describe('controlled form', () => {
+    function Editor() {
+      const [attrs, setAttrs] = useState({});
+
+      return <Form attrs={ attrs } onChange={ setAttrs } />
+    }
+
+    function Form(props) {
+      const {$} = useControlledForm(props);
+
+      return <Input { ...$('foo') } className="foo" />;
+    }
+
+    it('provides controlled form functionality', () => {
+       const wrapper = mount(<Editor />);
+        wrapper.find('input.foo').simulate('change', {target: {value: 'foo'}});
+        expect(wrapper.find('input.foo[value="foo"]')).to.have.lengthOf(1);
+    });
+  });
+
   describe('validations', () => {
+    before(() => {
+      defineValidations({
+        presence(value) {
+          if (!value || (Array.isArray(value) && !value.length)) return "Can't be empty";
+        },
+        numericality(value, {lessThan}) {
+          if (!value) return;
+
+          if (+value >= lessThan) return `Should be less than ${lessThan}`;
+        }
+      });
+    });
+
     function Form() {
       const {$, validate} = useForm({foo: ''}, {
         foo: 'presence'
@@ -146,7 +167,7 @@ describe('useForm', () => {
         const {$, validate} = useForm({foo: ''}, {
           foo: [
             'presence',
-            { numericality: { lessThan: 10 } },
+            {numericality: {lessThan: 10}},
             function(value) {
               if (+value === 5) {
                 return 'Not five';
@@ -235,7 +256,7 @@ describe('useForm', () => {
 
     describe('complex validation with wildcards', () => {
       function Form() {
-        const {get, set, $, getError, validate} = useForm({foos: [] }, {
+        const {get, set, $, getError, validate} = useForm({foos: []}, {
           'foos': 'presence',
           'foos.*.value': 'presence'
         });
@@ -270,7 +291,7 @@ describe('useForm', () => {
     });
 
     describe('callbacks usage', () => {
-      function Form({ onValid, onError }) {
+      function Form({onValid, onError}) {
         const {$, validate} = useForm({foo: ''}, {
           foo: 'presence'
         });
@@ -298,6 +319,46 @@ describe('useForm', () => {
         wrapper.find('.save').simulate('click');
         expect(validSpy).to.have.property('callCount', 1);
       });
+    });
+  });
+
+  describe('validation with i18n-backed error messages', () => {
+    function useTranslation() {
+      return {t};
+
+      function t(key) {
+        return key.match(/\.([^.]+)$/)[1]
+          .replace(/^.|_./g, s => s[1] ? ` ${s[1].toUpperCase()}` : s[0].toUpperCase());
+      }
+    }
+
+    before(() => {
+      defineValidations(useTranslation, 'common', ({t}) => ({
+        presence(value) {
+          if (!value || (Array.isArray(value) && !value.length)) {
+            return t('form.validations.cant_be_blank')
+          }
+        }
+      }));
+    });
+
+    function Form() {
+      const {$, validate} = useForm({foo: ''}, {
+        foo: 'presence'
+      });
+
+      return (
+        <div>
+          <Input { ...$('foo') } className="foo" />
+          <button onClick={ validate } className="validate">Validate</button>
+        </div>
+      );
+    }
+
+    it('translates error message using provided i18n translation hook', () => {
+      const wrapper = mount(<Form />);
+      wrapper.find('.validate').simulate('click');
+      expect(wrapper.find('.error').text()).to.eq('Cant Be Blank');
     });
   });
 });

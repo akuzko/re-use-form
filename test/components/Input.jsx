@@ -10,7 +10,7 @@ export default function Input({ value, onChange, error, name, wrapperClassName, 
 
   return (
     <div className={ wrapperClassName }>
-      <input value={ value } onChange={ handleChange } name={ name } { ...rest } />
+      <input value={ value || '' } onChange={ handleChange } name={ name } { ...rest } />
       { error &&
         <div className={ errorClassName }>{ error }</div>
       }

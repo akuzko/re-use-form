@@ -4,19 +4,29 @@ import Checkbox from './Checkbox';
 
 import { useForm, defineValidations } from '../../src';
 
-defineValidations({
+function useTranslation() {
+  return {t};
+
+  function t(key) {
+    return key.match(/\.([^.]+)$/)[1]
+      .replace(/^.|_./g, s => s[1] ? ` ${s[1].toUpperCase()}` : s[0].toUpperCase());
+  }
+}
+
+defineValidations(useTranslation, 'common', ({t}) => ({
   presence(value) {
     if (!value) {
-      return "Can't be blank";
+      return t('form.validations.cant_be_blank');
     }
   }
-})
+}));
 
 const initialForm = {};
 
 export default function Form() {
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [withValidation, setWithValidation] = useState(true);
+  const {t} = useTranslation();
   const {$, get, set, setErrors, submitWith} = useForm(initialForm, withValidation && {
     'name': 'presence',
     'item.id': 'presence'
@@ -27,10 +37,10 @@ export default function Form() {
   const changeUsername = value => set('name', value.toUpperCase());
 
   const save = () => {
-    setLoading(true);
+    setSaving(true);
     setTimeout(() => {
-      setLoading(false);
-      setErrors({'item.count': 'Not enough!'});
+      setSaving(false);
+      setErrors({'item.count': t('form.validations.not_enough!')});
     }, 2000);
   };
 
@@ -52,8 +62,8 @@ export default function Form() {
         <Input { ...$('item.count') } placeholder="Item Count" />
       </div>
 
-      { loading &&
-        <div>Loading...</div>
+      { saving &&
+        <div>Saving...</div>
       }
 
       <button onClick={ reset }>Reset</button>

@@ -1,9 +1,31 @@
 import get from 'lodash.get';
 
-export const validations = {};
+const config = {
+  validations: {}
+};
 
-export function defineValidations(definitions) {
-  Object.assign(validations, definitions);
+export function defineValidations(hookOrDefinitions, ...rest) {
+  if (typeof hookOrDefinitions === 'function') {
+    defineTranslatedValidations(...arguments)
+  } else {
+    definePlainValidations(hookOrDefinitions);
+  }
+}
+
+function defineTranslatedValidations(i18nHook, ...args) {
+  const definitionsFn = args.pop();
+
+  config.i18nHook = i18nHook;
+  config.hookArgs = args;
+  config.validations = definitionsFn;
+}
+
+function definePlainValidations(definitions) {
+  if (typeof config.validations !== 'object') {
+    config.validations = {};
+  }
+
+  Object.assign(config.validations, definitions);
 }
 
 export function callRuleValidator(formValidations, errors, name, attributes) {
@@ -49,7 +71,11 @@ function callValidator(validator, value) {
 }
 
 function stringToValidator(name) {
-  const validator = validations[name];
+  const validationsConfig = typeof config.validations === 'function' ?
+    config.validations(config.i18nHook(...config.hookArgs)) :
+    config.validations;
+
+  const validator = validationsConfig[name];
 
   if (!validator) throw new Error(`${name} validation rule is not defined`);
 
