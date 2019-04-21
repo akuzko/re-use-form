@@ -4,6 +4,8 @@ React Form Hook
 A set of easy-to-use hooks for both controlled and uncontrolled forms for [React](https://facebook.github.io/react/)
 with validation and i18n support.
 
+[![build status](https://img.shields.io/travis/akuzko/ok-react-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/ok-react-use-form)
+
 ## Installation
 
 ```
@@ -67,6 +69,7 @@ of initial form state, this hook accepts form's `props` object, which by convent
 has to have `attrs` and `onChange` values defined:
 
 ```js
+import React, { useState } from 'react';
 import { useForm } from 'ok-react-use-form';
 import { TextField } from 'my-components/inputs';
 
@@ -121,7 +124,7 @@ function Form() {
 ### Note on Validation-less Forms
 
 Before we go to validation section bellow, it should be mentioned that even
-forms without defined client-side validation can use `getError, `setErrors`
+forms without defined client-side validation can use `getError`, `setErrors`
 and `setError` helpers returned by form hook. With no client-side validation,
 you might still want to interact with the server when user works with form
 and should something go wrong, you might want to set server-side errors for
@@ -138,7 +141,7 @@ validations are used, they should be defined:
 import { defineValidations } from 'ok-react-use-form';
 
 // define very primitive validations for demonstrational purposes.
-// all validation has to be defined only once in some initialization file.
+// all validation has to be defined only once on your app initialization.
 defineValidations({
   presence(value) {
     if (!value) {
@@ -163,15 +166,16 @@ defineValidations({
 ```
 
 ```js
+// UserForm.js
+// ...other imports...
 import { useForm } from 'ok-react-use-form';
 
-// UserForm.js
 function UserForm() {
   const {$, validate} = useForm({}, {
     'email': ['presence', 'email'],
     'fullName': 'presence',
     'address.city': 'presence',
-    'address.line': { presence: true, format: /^[\w\s\d\.,]+$/ }
+    'address.line': {presence: true, format: /^[\w\s\d\.,]+$/}
   });
 
   const save = () => {
@@ -245,23 +249,19 @@ Both `useForm` and `useControlledForm` hooks return object with following proper
   - `get('foos.1.bar') // => 'bak'`
   - `get() // returns whole form's attributes object`
 - `set(name, value)` - sets a `value` for an input with a specified `name`.
-  Optional `meta` argument will be passed to `props.onChange` function alongside
-  with new `attrs` as second argument.
 - `set(object)` - sets multiple values at once. Each key in the object
-  corresponds to input name, and values are input values. Optional `meta` argument
-  will be passed to `props.onChange` function alongside with new `attrs` as second
-  argument.
+  corresponds to input name, and values are input values.
 - `errors` - object representing all validation errors.
 - `getError(name)` - returns validation error for an input with a given name.
 - `setErrors(errors)` - sets `errors` (object) as form's errors.
+- `setError(name, error)` - sets an error for a single input with a given name.
 
 In addition to properties above, if `useForm`/`uesControlledForm` hook was called
 with validation rules for inputs, hook object will also have properties bellow:
 
-- `setError(name, error)` - sets an error for a single input with a given name.
 - `validate({onValid, onError})` - performs form validations. Accepts an object
   with `onValid` and `onError` callbacks that will be called in case of
-  successfull/failed validation correspondingly.
+  successful/failed validation correspondingly.
 - `submitWith(callback)` - performs form validation and executes a callback
   if there were no errors.
 

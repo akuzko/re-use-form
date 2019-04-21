@@ -1,6 +1,9 @@
 src
 examples
+test
 yarn.lock
 .babelrc
 .gitignore
+.travis.yml
 webpack.config.js
+.vscode
