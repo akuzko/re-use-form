@@ -32,18 +32,18 @@ function usePlainForm(attrs, setAttrs) {
   const setError = (path, value) => setErrors({...errors, [path]: value});
   const input = (path, onChange) => {
     if (onChange === undefined) {
-      onChange = value => set(path, value);
+      onChange = (path, value) => set(path, value);
     }
 
     return {
       value: get(path),
-      onChange,
+      onChange: value => onChange(path, value),
       error: errors[path],
       name: path
     };
   };
 
-  return {get, set, getError, setError, input, $: input};
+  return {get, set, errors, setErrors, getError, setError, input, $: input};
 }
 
 function useValidatedForm(attrs, setAttrs, validationConfig) {
@@ -93,12 +93,12 @@ function useValidatedForm(attrs, setAttrs, validationConfig) {
 
   const input = (path, onChange) => {
     if (onChange === undefined) {
-      onChange = value => set(path, value);
+      onChange = (path, value) => set(path, value);
     }
 
     return {
       value: get(path),
-      onChange,
+      onChange: value => onChange(path, value),
       error: errors[path],
       name: path
     };
@@ -121,6 +121,7 @@ function useValidatedForm(attrs, setAttrs, validationConfig) {
     set,
     input,
     $: input,
+    errors,
     getError,
     setError,
     setErrors,

@@ -4,8 +4,7 @@
   "description": "Easy-to-use React form hooks with built-in validation support",
   "main": "dist/index.js",
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "scripts": {
     "start": "webpack-dev-server --mode development",

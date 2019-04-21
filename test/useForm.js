@@ -34,7 +34,7 @@ describe('useForm', () => {
 
       return (
         <div>
-          <Input { ...$('foo', value => set('foo', value.toUpperCase())) } className="foo" />
+          <Input { ...$('foo', (k, value) => set(k, value.toUpperCase())) } className="foo" />
         </div>
       );
     }
@@ -49,7 +49,7 @@ describe('useForm', () => {
       function Form() {
         const {$, set} = useForm({foo: '', bar: ''});
 
-        const changeFoo = value => set({foo: value, bar: value + 'bar'});
+        const changeFoo = (k, value) => set({foo: value, bar: value + 'bar'});
 
         return (
           <div>
@@ -146,7 +146,7 @@ describe('useForm', () => {
 
         return (
           <div>
-            <Input { ...$('foo', value => set('foo', value.toUpperCase())) } className="foo" />
+            <Input { ...$('foo', (k, value) => set(k, value.toUpperCase())) } className="foo" />
             <button onClick={ validate } className="validate">Validate</button>
           </div>
         );
@@ -203,7 +203,7 @@ describe('useForm', () => {
           bar: 'presence'
         });
 
-        const changeFoo = value => set({foo: value, bar: value + 'bar'});
+        const changeFoo = (k, value) => set({foo: value, bar: value + 'bar'});
 
         return (
           <div>
