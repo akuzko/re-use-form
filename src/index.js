@@ -1,2 +1,2 @@
-export * from './useForm';
-export * from './validations';
+export * from "./useForm";
+export { defValidation } from "./validations";

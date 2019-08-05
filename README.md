@@ -1,8 +1,8 @@
 React Form Hook
 ===============
 
-A set of easy-to-use hooks for both controlled and uncontrolled forms for [React](https://facebook.github.io/react/)
-with validation and i18n support.
+Simple and robust form hook for [React](https://facebook.github.io/react/) with validation
+support and simple internationalization.
 
 [![build status](https://img.shields.io/travis/akuzko/ok-react-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/ok-react-use-form)
 
@@ -23,11 +23,12 @@ any component that consumes three properties: `value`, `error` and `onChange`
 It also has to provide it's `value` as first argument to `onChange` function
 supplied in props.
 
-### Uncontrolled Forms
+### `useForm` Hook
 
 `ok-react-use-form` provides `useForm` hook for uncontrolled forms. It accepts
-object with initial form attributes and optional (yet recommended) client-side
-validations (see "Form Validations" section bellow).
+object with initial form attributes and optional config. Config can be used to
+define client-side validations (see *"Form Validations"* section bellow) and to
+ease internationalization.
 
 ```js
 import { useForm } from 'ok-react-use-form';
@@ -57,43 +58,54 @@ function MyForm({onSave}) {
 
 `useForm` hook returns an object that has both `input` and `$` keys with the same
 value. While `input` is more explicit name, it might become cumbersome to use it
-over and over again. For this reason, `useForm` and `useControlledForm` hooks also
-provide a `$` helper that does the same. Basically, it's the same approach as used in
+over and over again. For this reason, `useForm` hook also provides a `$` helper
+that does the same. Basically, it's the same approach as used in
 [`react-form-base`](https://github.com/akuzko/react-form-base) package. All examples
 bellow will use `$` helper method as more common one.
 
-### Controlled Forms
+### Hook Config
 
-For controlled forms `ok-react-use-form` provides `useControlledForm` hook. Instead
-of initial form state, this hook accepts form's `props` object, which by convention
-has to have `attrs` and `onChange` values defined:
+`useForm` hook accepts a config as a second argument. This `config` object is
+mainly used for declaring form validations and **is memoized by default**. Also,
+config itself may be replaced by validation rules (see *"Form Validations"* section
+bellow), removing need of extra nesting.
 
+Bellow are examples of `useForm` hook call with valid configs:
 ```js
-import React, { useState } from 'react';
-import { useForm } from 'ok-react-use-form';
-import { TextField } from 'my-components/inputs';
+// Using input validation setup directly in place of config:
+const {$} = useForm({}, {
+  username: "presence"
+});
+```
 
-function Editor() {
-  const [form, setForm] = useState({});
+To be able to have dynamic config, you should disable default memoization by using
+`useMemo: false` config option. But doing just this is **highly discouraged**, since
+on each render hook will receive new object literal re-setting config with no
+real changes every time. So whenever you disable default memoization, make sure
+to provide custom one with proper dependencies:
+```js
+const [validationEnabled, setValidationEnabled] = useState(false);
+const {$} = useForm({}, useMemo(() => ({
+  useMemo: false,
+  validations: validationEnabled && {
+    username: "presence"
+  }
+}), [validationEnabled]));
+```
 
-  const submit = () => {
-    // do something with `form` object.
-  };
-
-  return <Form attrs={ form } onChange={ setForm } onSave={ submit } />;
-}
-
-function Form(props) {
-  const {$} = useControlledForm(props);
-
-  return (
-    <>
-      <TextField { ...$('email') } label="Email" />
-      <TextField { ...$('fullName') } label="FullName" />
-      <button onClick={ props.onSave }>Register</button>
-    </>
-  );
-}
+Finally, in cases when validation setup needs to share common options for all
+validation rules (like for internationalizing error messages, see corresponding
+section bellow), you can specify `defaultOptions` within validation setup:
+```js
+const {t} = useTranslation("common");
+const {$} = useForm({}, {
+  validations: {
+    defaultOptions: {t},
+    rules: {
+      username: "presence"
+    }
+  }
+});
 ```
 
 ### Custom `onChange` Input Handler
@@ -135,35 +147,43 @@ mentioned helpers are about.
 
 `ok-react-use-form` provides a very easy way to declare form validations,
 which will automatically validate inputs on change when required. But before
-validations are used, they should be defined:
+validations are used, they should be defined. Each validation rule is defined
+via `defValidation` function call. Validation handler function used in this
+call should accept two arguments - input's `value` and validation `options`.
+Even considering that not all validation rules need additional options for
+their business logic, the most common use case scanario is to allow user
+to specify custom error message when validation is failed.
 
 ```js
-import { defineValidations } from 'ok-react-use-form';
+import { defValidation } from 'ok-react-use-form';
 
-// define very primitive validations for demonstrational purposes.
-// all validation has to be defined only once on your app initialization.
-defineValidations({
-  presence(value) {
-    if (!value) {
-      return "Cannot be blank";
-    }
-  },
-  email(value) {
-    if (!value) return;
+// Define very primitive validations for demonstrational purposes.
+// All validation rules should be defined only once on your app initialization.
+defValidations("presence", (value, {message}) => {
+  if (!value) {
+    return message || "Cannot be blank";
+  }
+});
 
-    if (!/.+@.+/.test(value)) {
-      return "Should be a valid email address";
-    }
-  },
-  format(value, format) {
-    if (!value) return;
+defValidation("email", (value, {message}) => {
+  if (!value) return;
 
-    if (!format.test(value)) {
-      return 'Invalid format';
-    }
+  if (!/.+@.+/.test(value)) {
+    return message || "Should be a valid email address";
+  }
+});
+
+defValidation("format", (value, {pattern, message}) => {
+  if (!value) return;
+
+  if (!pattern.test(value)) {
+    return message || "Invalid format";
   }
 });
 ```
+
+With generic validations defined, they can be used in form hook (alongside with
+custom function validations, if needed)
 
 ```js
 // UserForm.js
@@ -172,10 +192,22 @@ import { useForm } from 'ok-react-use-form';
 
 function UserForm() {
   const {$, validate} = useForm({}, {
-    'email': ['presence', 'email'],
-    'fullName': 'presence',
-    'address.city': 'presence',
-    'address.line': {presence: true, format: /^[\w\s\d\.,]+$/}
+    "email": ["presence", "email"],
+    "fullName": "presence",
+    "address.city": ["presence", function(value) {
+      if (!value) return;
+
+      if (!/^[A-Z]/.test(value)) {
+        return "Should start with capital letter";
+      }
+    }],
+    "address.line": {
+      presence: true,
+      format: {
+        pattern: /^[\w\s\d\.,]+$/,
+        message: "Please enter a valid address"
+      }
+    }
   });
 
   const save = () => {
@@ -191,12 +223,12 @@ function UserForm() {
 
   return (
     <>
-      <TextField { ...$('email') } label="Email" />
-      <TextField { ...$('fullName') } label="Full Name" />
+      <TextField { ...$("email") } label="Email" />
+      <TextField { ...$("fullName") } label="Full Name" />
 
-      <Select { ...$('address.countryId') } options={ countryOptions } label="Country" />
-      <TextField { ...$('address.city') } label="City" />
-      <TextField { ...$('address.line') } label="Address" />
+      <Select { ...$("address.countryId") } options={ countryOptions } label="Country" />
+      <TextField { ...$("address.city") } label="City" />
+      <TextField { ...$("address.line") } label="Address" />
 
       <button onClick={ save }>Submit</button>
     </>
@@ -210,33 +242,70 @@ and adopt it's functionality for validation definitions.
 
 ### Internationalized Validation Error Messages
 
-`ok-react-use-form` also supports hook-based internationalization approach for
-error messages out of the box. To have translated error messages, validations
-should be defined with following arguments:
-- a translation hook you want to use for i18n solution
-- arguments passed to this hook (usually a single string representing a namesace)
-- a function that takes hook's return value as argument and returns validation rules.
+Depending on adopted i18n solution in your application, there are different ways of
+internationalizing validation error messages. The most common ones would include
+global `t` function and hook-based `t` function.
 
-For example, integration with [`react-i18next`](https://react.i18next.com/) framework
-might look like this:
+#### Global `t` Function
+
+Projects like [`ttag`](https://ttag.js.org/) give you a global `t` function
+with gettext-like usage. Probably, this approach provides the most simple and
+easy-to-use way to internationalize error messages:
 
 ```js
-import { useTranslation } from 'react-i18next';
-import { defineValidations } from 'ok-react-use-form';
+import { defValidation } from "ok-react-use-form";
+import { t } from "ttag";
 
-defineValidations(useTranslation, 'common:form.validation_errors', ({t}) => {
-  presence(value) {
-    if (!value) {
-      return t('cant_be_blank');
-    }
-  },
-  // the rest of validations
+defValidation("presence", (value, {message}) => {
+  if (!value) {
+    return message || t`Can't be blank`;
+  }
 });
+```
+
+#### Hook-based `t` Function
+
+Frameworks like [`react-i18next`](https://react.i18next.com/) provide translation
+hooks to be used within components themselves. In case of `react-i18next` we have
+a `useTranslation` hook, which provides access to `t` function. Since this function
+is locally scoped to component, it should be passed to validation options explicitly.
+Luckily, `useForm` hook allows to provide default validation options to have
+this `t` function specified only once without need to explicitly mention it
+over and over again:
+
+```js
+import { defValidation } from "ok-react-use-form";
+
+defValidation("presence", (value, {t, message}) => {
+  if (!value) {
+    return message || t("errors.cannot_be_blank");
+  }
+});
+```
+And then in form:
+```jsx
+import { useForm } from "ok-react-use-form";
+import { useTranslation } from "react-i18next";
+
+export function Form() {
+  const {t} = useTranslation("common");
+  const {$} = useForm({}, {
+    validations: {
+      defaultOptions: {t},
+      rules: {
+        username: "presence",
+        email: ["presence", "email"]
+      }
+    }
+  });
+
+  // rest of component
+}
 ```
 
 ### Hook helper object
 
-Both `useForm` and `useControlledForm` hooks return object with following properties:
+`useForm` hook returns object with following properties:
 
 - `$(name)`, `input(name)` - returns a set of properties for input with a given
   name. `name` is a dot-separated string, i.e. `'foo.bar'` (for `bar` property
@@ -255,15 +324,13 @@ Both `useForm` and `useControlledForm` hooks return object with following proper
 - `getError(name)` - returns validation error for an input with a given name.
 - `setErrors(errors)` - sets `errors` (object) as form's errors.
 - `setError(name, error)` - sets an error for a single input with a given name.
-
-In addition to properties above, if `useForm`/`uesControlledForm` hook was called
-with validation rules for inputs, hook object will also have properties bellow:
-
 - `validate({onValid, onError})` - performs form validations. Accepts an object
   with `onValid` and `onError` callbacks that will be called in case of
   successful/failed validation correspondingly.
-- `submitWith(callback)` - performs form validation and executes a callback
+- `withValidation(callback)` - performs form validation and executes a callback
   if there were no errors.
+- `reset(initial)` - clears form errors and sets form attributes provided value.
+  If no value provided, uses object that was passed to initial `useForm` hook call.
 
 ## License
 

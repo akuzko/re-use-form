@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import Input from './Input';
-import Checkbox from './Checkbox';
+import React, { useState, useMemo, useCallback } from "react";
+import Input from "./Input";
+import Checkbox from "./Checkbox";
 
-import { useForm, defineValidations } from '../../src';
+import { useForm, defValidation } from "../../src";
 
 function useTranslation() {
   return {t};
@@ -13,84 +13,108 @@ function useTranslation() {
   }
 }
 
-defineValidations(useTranslation, 'common', ({t}) => ({
-  presence(value) {
-    if (!value) {
-      return t('form.validations.cant_be_blank');
-    }
-
-    if (Array.isArray(value) && value.length === 0) {
-      return t('form.validations.cant_be_blank');
-    }
-  },
-  format(value, format) {
-    if (!value) return;
-
-    if (!format.test(value)) {
-      return 'Invalid format';
-    }
+defValidation("presence", (value, {t, message}) => {
+  if (!value) {
+    return message || t("form.validations.cant_be_blank");
   }
-}));
+
+  if (Array.isArray(value) && value.length === 0) {
+    return t('form.validations.cant_be_blank');
+  }
+});
+
+defValidation("format", (value, {t, message, pattern}) => {
+  if (!value) return;
+
+  if (!pattern.test(value)) {
+    return message || t("form.validations.invalid_format");
+  }
+});
 
 const initialForm = {
-  username: '',
+  username: "",
   items: []
 };
 
 export default function Form() {
   const [saving, setSaving] = useState(false);
-  const [withValidation, setWithValidation] = useState(true);
+  const [validationEnabled, setValidationEnabled] = useState(true);
   const {t} = useTranslation();
-  const {$, get, set, getError, setErrors, submitWith} = useForm(initialForm, withValidation && {
-    'username': {
-      presence: true,
-      format: /^[\w\s\d\.,]+$/,
-    },
-    'items': 'presence',
-    'items.*.id': 'presence',
-    'items.*.count': 'presence'
-  });
+  const {$, get, set, getError, setErrors, withValidation, reset: doReset} = useForm(initialForm, useMemo(() => ({
+    useMemo: false,
+    validations: validationEnabled && {
+      defaultOptions: {t},
+      rules: {
+        "username": {
+          presence: true,
+          format: {
+            pattern: /^[\w\s\d\.,]+$/
+          },
+        },
+        "items": "presence",
+        "items.*.id": "presence",
+        "items.*.count": "presence"
+      }
+    }
+  }), [validationEnabled]));
 
-  const reset = () => set(initialForm);
+  const items = get("items");
 
-  const items = get('items');
+  const changeUsername = useCallback((key, value) => {
+    set(key, value.toUpperCase())
+  }, []);
 
-  const changeUsername = (key, value) => set(key, value.toUpperCase());
-  const changeItemCount = (key, value) => {
+  const changeItemId = useCallback((key, value) => {
+    const index = +key.split(".")[1];
+
+    set({
+      [key]: value,
+      [`items.${index}.count`]: ""
+    });
+  }, []);
+
+  const changeItemCount = useCallback((key, value) => {
     if (isFinite(+value)) {
       set(key, value);
     }
-  };
+  }, []);
 
-  const addItem = () => set('items', [...items, {}]);
-  const removeItem = (i) => {
+  const addItem = useCallback(() => {
+    set("items", [...items, {}]);
+  }, [items]);
+
+  const removeItem = useCallback((i) => {
     const nextItems = [...items];
 
     nextItems.splice(i, 1);
-    set('items', nextItems);
-  };
+    set("items", nextItems);
+  }, [items]);
 
-  const save = () => {
+  const save = useCallback(() => {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      setErrors({'items.0.count': t('form.validations.not_enough!')});
+      setErrors({"items.0.count": t("form.validations.not_enough!")});
     }, 2000);
-  };
+  }, []);
 
-  const submit = withValidation ? submitWith(save) : save;
+  const submit = useMemo(() => {
+    return validationEnabled ? withValidation(save) : save
+  }, [validationEnabled, save]);
+
+  const reset = useCallback(() => doReset(), []);
 
   return (
     <>
       <div>
-        <Checkbox value={ withValidation } onChange={ setWithValidation } label="Client Validation" />
+        <Checkbox value={ validationEnabled } onChange={ setValidationEnabled } label="Client Validation" />
       </div>
 
       <div>
-        <Input { ...$('username', changeUsername) } placeholder="Username" />
+        <Input { ...$("username", changeUsername) } placeholder="Username" />
       </div>
 
-      { getError('items') &&
+      { getError("items") &&
         <div>At least one item is required</div>
       }
 
@@ -99,7 +123,7 @@ export default function Form() {
       { items.map((_item, i) => (
           <div key={ i }>
             <div>
-              <Input { ...$(`items.${i}.id`) } placeholder="Item ID" />
+              <Input { ...$(`items.${i}.id`, changeItemId) } placeholder="Item ID" />
             </div>
             <div>
               <Input { ...$(`items.${i}.count`, changeItemCount) } placeholder="Item Count" />

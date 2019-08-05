@@ -1,131 +1,73 @@
-import { useState } from 'react';
-import _get from 'lodash.get';
-import update from 'update-js';
-import { callRuleValidator, callValueValidator } from './validations';
+import { useReducer, useCallback, useEffect } from "react";
+import getValue from "get-lookup";
+import reducer, {
+  init,
+  setConfig,
+  setAttr,
+  setAttrs,
+  validate as doValidate,
+  setError as doSetError,
+  setErrors as doSetErrors,
+  reset as doReset
+} from "./reducer";
 
-export function useForm(initialAttrs, validation) {
-  const [attrs, setAttrs] = useState(initialAttrs);
+export function useForm(initialAttrs, config = {}) {
+  const [{attrs, errors}, dispatch] = useReducer(reducer, init(initialAttrs, config));
 
-  return validation === undefined ?
-    usePlainForm(attrs, setAttrs) :
-    useValidatedForm(attrs, setAttrs, validation);
-}
+  useEffect(() => {
+    if (config.useMemo === false) {
+      dispatch(setConfig(config));
+    }
+  }, [config]);
 
-export function useControlledForm({attrs, onChange}, validation) {
-  return validation === undefined ?
-    usePlainForm(attrs, onChange) :
-    useValidatedForm(attrs, onChange, validation);
-}
+  const get = useCallback((path) => {
+    return path ? getValue(attrs, path) : attrs;
+  }, [attrs]);
 
-function usePlainForm(attrs, setAttrs) {
-  const [errors, setErrors] = useState({});
-
-  const get = path => path ? _get(attrs, path) : attrs;
-  const set = (path, value) => {
-    if (value) {
-      setAttrs(update(attrs, path, value));
+  const set = useCallback((pathOrAttrs, value) => {
+    if (typeof pathOrAttrs === "object") {
+      return dispatch(setAttrs(pathOrAttrs));
     } else {
-      setAttrs(path);
+      return dispatch(setAttr(pathOrAttrs, value));
     }
-  }
-  const getError = path => errors[path];
-  const setError = (path, value) => setErrors({...errors, [path]: value});
-  const input = (path, onChange) => {
-    if (onChange === undefined) {
-      onChange = (path, value) => set(path, value);
-    }
+  }, []);
 
-    return {
-      value: get(path),
-      onChange: value => onChange(path, value),
-      error: errors[path],
-      name: path
-    };
-  };
+  const validate = useCallback((callbacks = {}) => dispatch(doValidate(callbacks)), []);
 
-  return {get, set, errors, setErrors, getError, setError, input, $: input};
-}
+  const getError = useCallback((path) => errors[path], [errors]);
 
-function useValidatedForm(attrs, setAttrs, validationConfig) {
-  const [errors, setErrors] = useState({});
-  const [shouldValidateOnChange, setShouldValidateOnChange] = useState(false);
+  const setError = useCallback((name, error) => dispatch(doSetError(name, error)), []);
 
-  const get = path => path ? _get(attrs, path) : attrs;
-  const getError = path => errors[path];
-  const setError = (path, value) => setErrors({...errors, [path]: value});
+  const setErrors = useCallback((errors) => dispatch(doSetErrors(errors)), []);
 
-  if (typeof validationConfig === 'function') {
-    validationConfig = validationConfig(get);
-  }
+  const reset = useCallback((attrs) => dispatch(doReset(attrs)), []);
 
-  const validateAttrs = (attributes, {onValid, onError} = {}) => {
-    const nextErrors = {};
-
-    Object.keys(validationConfig).forEach((name) => {
-      callRuleValidator(validationConfig, nextErrors, name, attributes);
-    });
-
-    const valid = Object.getOwnPropertyNames(nextErrors).length === 0;
-
-    setErrors(nextErrors);
-    setShouldValidateOnChange(true);
-    if (valid && onValid) {
-      onValid();
-    }
-    if (!valid && onError) {
-      onError(nextErrors);
-    }
-  };
-
-  const set = (name, value) => {
-    const nextAttrs = value === undefined ? name : update(attrs, name, value);
-    setAttrs(nextAttrs);
-
-    if (!shouldValidateOnChange) return;
-
-    if (typeof name === 'string' && !(typeof value === 'object') && !Array.isArray(value)) {
-      const error = callValueValidator(validationConfig, name, value);
-      return setError(name, error);
-    }
-
-    validateAttrs(nextAttrs);
-  };
+  const withValidation = (callback) => () => validate({onValid: callback});
 
   const input = (path, onChange) => {
     if (onChange === undefined) {
       onChange = (path, value) => set(path, value);
     }
 
+    // TODO: consider caching `onChange` handler
     return {
       value: get(path),
       onChange: value => onChange(path, value),
       error: errors[path],
       name: path
     };
-  };
-
-  const validate = (opts) => {
-    return validateAttrs(get(), opts);
-  };
-
-  const submitWith = handler => () => {
-    validate({
-      onValid() {
-        handler(get());
-      }
-    });
   };
 
   return {
     get,
     set,
-    input,
-    $: input,
-    errors,
     getError,
     setError,
     setErrors,
+    reset,
     validate,
-    submitWith
+    withValidation,
+    input,
+    $: input
   };
 }
