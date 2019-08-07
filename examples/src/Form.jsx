@@ -40,7 +40,7 @@ export default function Form() {
   const [saving, setSaving] = useState(false);
   const [validationEnabled, setValidationEnabled] = useState(true);
   const {t} = useTranslation();
-  const {$, get, set, getError, setErrors, withValidation, reset: doReset} = useForm(initialForm, useMemo(() => ({
+  const {$, get, set, getError, setError, withValidation, reset: doReset} = useForm(initialForm, useMemo(() => ({
     useMemo: false,
     validations: validationEnabled && {
       defaultOptions: {t},
@@ -94,7 +94,7 @@ export default function Form() {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      setErrors({"items.0.count": t("form.validations.not_enough!")});
+      setError("items.0.count", t("form.validations.not_enough!"));
     }, 2000);
   }, []);
 

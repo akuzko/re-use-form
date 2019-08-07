@@ -128,10 +128,22 @@ export function reset(attrs) {
   return {type: "reset", attrs};
 }
 
+const CONFIG_PROPS = ["useMemo", "pureHandlers", "validations"];
+
+function isConfig(obj) {
+  for (const key in obj) {
+    if (CONFIG_PROPS.includes(key)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function resolveConfig(config) {
   if (!config) return {};
 
-  if (!("validations" in config)) {
+  if (!isConfig(config)) {
     config = {validations: config};
   }
 
@@ -143,5 +155,9 @@ function resolveConfig(config) {
     validations = validations.rules;
   }
 
-  return {validationOptions, validations};
+  return {
+    pureHandlers: config.pureHandlers !== false && typeof WeakMap !== "undefined",
+    validationOptions,
+    validations
+  };
 }

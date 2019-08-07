@@ -120,9 +120,9 @@ function Form() {
   const {$, set} = useForm({});
 
   // uppercases user's input
-  const changeInput = (name, value) => {
+  const changeInput = useCallback((name, value) => {
     set(name, value.toUpperCase());
-  };
+  }, []);
 
   return (
     <>
@@ -132,6 +132,19 @@ function Form() {
   );
 }
 ```
+
+### Purity Support
+
+All of the helper functions returned by `useForm` hook, with the exception of
+`get` and `getError` functions that depends on form attributes and errors whenever
+they change, are persistent and do not change on per render basis. The same goes
+for values returned by `$`/`input` helper - as long as on-change handler passed
+to `$` function is persistent (and if it was omitted), it's `onChange` property
+will be persistent as well, i.e. pure input components that consume it won't be
+re-rendered if other properties do not change too.
+
+If, for some reason, you want to disable input onChange handlers persistence,
+you can use `pureHandlers: false` config option.
 
 ### Note on Validation-less Forms
 
@@ -151,13 +164,13 @@ validations are used, they should be defined. Each validation rule is defined
 via `defValidation` function call. Validation handler function used in this
 call should accept two arguments - input's `value` and validation `options`.
 Even considering that not all validation rules need additional options for
-their business logic, the most common use case scanario is to allow user
+their business logic, the most common use case scenario is to allow user
 to specify custom error message when validation is failed.
 
 ```js
 import { defValidation } from 'ok-react-use-form';
 
-// Define very primitive validations for demonstrational purposes.
+// Define very primitive validations for demonstration purposes.
 // All validation rules should be defined only once on your app initialization.
 defValidations("presence", (value, {message}) => {
   if (!value) {
