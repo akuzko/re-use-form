@@ -10,6 +10,7 @@ import reducer, {
   setErrors as doSetErrors,
   reset as doReset
 } from "./reducer";
+import { ValidationPromise } from "./validations";
 import HandlersCache from "./HandlersCache";
 
 export function useForm(initialAttrs, config = {}) {
@@ -33,7 +34,11 @@ export function useForm(initialAttrs, config = {}) {
     }
   }, []);
 
-  const validate = useCallback((callbacks = {}) => dispatch(doValidate(callbacks)), []);
+  const validate = useCallback(() => {
+    return new ValidationPromise((resolve, reject) => {
+      dispatch(doValidate(resolve, reject));
+    });
+  }, []);
 
   const getError = useCallback((path) => errors[path], [errors]);
 
@@ -43,14 +48,14 @@ export function useForm(initialAttrs, config = {}) {
 
   const reset = useCallback((attrs) => dispatch(doReset(attrs)), []);
 
-  const withValidation = (callback) => () => validate({onValid: callback});
+  const withValidation = (callback) => () => validate().then(callback);
 
   const defaultOnChange = useCallback((path, value) => set(path, value), []);
 
   const input = (path, onChange = defaultOnChange) => {
     return {
       value: get(path),
-      onChange: handlersCache.fetch(path, onChange, () => value => onChange(path, value)),
+      onChange: handlersCache.fetch(path, onChange, () => (value, ...args) => onChange(path, value, ...args)),
       error: errors[path],
       name: path
     };

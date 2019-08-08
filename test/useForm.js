@@ -253,7 +253,9 @@ describe("useForm", () => {
         });
 
         const save = () => {
-          validate({ onValid, onError });
+          validate()
+            .then(onValid)
+            .catch(onError);
         };
 
         return (

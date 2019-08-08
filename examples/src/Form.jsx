@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from "react";
 import Input from "./Input";
 import Checkbox from "./Checkbox";
 
-import { useForm, defValidation } from "../../src";
+import { useForm } from "../../src";
 
 function useTranslation() {
   return {t};
@@ -13,24 +13,6 @@ function useTranslation() {
   }
 }
 
-defValidation("presence", (value, {t, message}) => {
-  if (!value) {
-    return message || t("form.validations.cant_be_blank");
-  }
-
-  if (Array.isArray(value) && value.length === 0) {
-    return t('form.validations.cant_be_blank');
-  }
-});
-
-defValidation("format", (value, {t, message, pattern}) => {
-  if (!value) return;
-
-  if (!pattern.test(value)) {
-    return message || t("form.validations.invalid_format");
-  }
-});
-
 const initialForm = {
   username: "",
   items: []
@@ -40,7 +22,16 @@ export default function Form() {
   const [saving, setSaving] = useState(false);
   const [validationEnabled, setValidationEnabled] = useState(true);
   const {t} = useTranslation();
-  const {$, get, set, getError, setError, withValidation, reset: doReset} = useForm(initialForm, useMemo(() => ({
+  const {
+    $,
+    get,
+    set,
+    getError,
+    setError,
+    withValidation,
+    reset: doReset,
+    validate: doValidate
+  } = useForm(initialForm, useMemo(() => ({
     useMemo: false,
     validations: validationEnabled && {
       defaultOptions: {t},
@@ -90,6 +81,12 @@ export default function Form() {
     set("items", nextItems);
   }, [items]);
 
+  const validate = useCallback(() => {
+    doValidate()
+      .then(attrs => console.log("Form is valid", attrs))
+      .catch(errors => console.log("Form has errors", errors));
+  });
+
   const save = useCallback(() => {
     setSaving(true);
     setTimeout(() => {
@@ -110,7 +107,7 @@ export default function Form() {
         <Checkbox value={ validationEnabled } onChange={ setValidationEnabled } label="Client Validation" />
       </div>
 
-      <div>
+      <div className="username">
         <Input { ...$("username", changeUsername) } placeholder="Username" />
       </div>
 
@@ -140,6 +137,7 @@ export default function Form() {
 
       <div>
         <button onClick={ reset }>Reset</button>
+        <button onClick={ validate }>Validate</button>
         <button onClick={ submit }>Submit</button>
       </div>
 

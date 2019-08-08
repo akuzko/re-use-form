@@ -41,14 +41,14 @@ function MyForm({onSave}) {
 
   return (
     <>
-      <TextField { ...input('email') } label="Email" />
-      <TextField { ...input('fullName') } label="Full Name" />
+      <TextField { ...input("email") } label="Email" />
+      <TextField { ...input("fullName") } label="Full Name" />
 
-      <Select { ...input('address.countryId') } options={ countryOptions } label="Country" />
-      <TextField { ...input('address.city') } label="City" />
-      <TextField { ...input('address.line') } label="Address" />
+      <Select { ...input("address.countryId") } options={ countryOptions } label="Country" />
+      <TextField { ...input("address.city") } label="City" />
+      <TextField { ...input("address.line") } label="Address" />
 
-      <button onClick={save}>Submit</button>
+      <button onClick={ save }>Submit</button>
     </>
   );
 }
@@ -139,7 +139,7 @@ All of the helper functions returned by `useForm` hook, with the exception of
 `get` and `getError` functions that depends on form attributes and errors whenever
 they change, are persistent and do not change on per render basis. The same goes
 for values returned by `$`/`input` helper - as long as on-change handler passed
-to `$` function is persistent (and if it was omitted), it's `onChange` property
+to `$` function is persistent (or if it was omitted), it's `onChange` property
 will be persistent as well, i.e. pure input components that consume it won't be
 re-rendered if other properties do not change too.
 
@@ -168,7 +168,7 @@ their business logic, the most common use case scenario is to allow user
 to specify custom error message when validation is failed.
 
 ```js
-import { defValidation } from 'ok-react-use-form';
+import { defValidation } from "ok-react-use-form";
 
 // Define very primitive validations for demonstration purposes.
 // All validation rules should be defined only once on your app initialization.
@@ -223,16 +223,19 @@ function UserForm() {
     }
   });
 
-  const save = () => {
-    validate({
-      onValid() {
-        // do something on successfull validation
-      },
-      onError(errors) {
-        // do something if validation failed
-      }
-    });
-  };
+  const save = useCallback(() => {
+    validate()
+      .then((attrs) => {
+        // Do something on successful validation.
+        // `attrs` is identical to `get()` helper call
+      })
+      .catch((errors) {
+        // Do something if validation failed. At this moment
+        // errors are already rendered.
+        // It is safe to omit this `.catch` closure - no
+        // exception will be thrown.
+      });
+  });
 
   return (
     <>
@@ -252,6 +255,30 @@ function UserForm() {
 It's up to you how to define validation rules. But as for suggested solution,
 you might want to take a look at [`validate.js`](https://validatejs.org/) project
 and adopt it's functionality for validation definitions.
+
+#### `withValidation` Helper
+
+It's pretty common to perform some action as soon as form has no errors and
+validation passes. For such case there is `withValidation` helper that accepts
+a callback and wraps it in validation routines. This callback will be called
+only if for had no errors:
+
+```jsx
+const {$, withValidation} = useForm({}, {
+  name: "presence"
+});
+
+const save = (attrs) => {
+  // send `attrs` to server
+};
+
+return (
+  <>
+    <Input { ...$("name") } />
+    <button onClick={ withValidation(save) }>Submit</button>
+  </>
+);
+```
 
 ### Internationalized Validation Error Messages
 
@@ -344,6 +371,26 @@ export function Form() {
   if there were no errors.
 - `reset(initial)` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
+
+### Better Naming
+
+Naming variables is hard. Naming npm packages is even harder. Especially considering
+that names can be taken. Since `ok-react-use-form` is pretty cumbersome to write
+over and over again, there are few options that can improve usage experience:
+
+- Webpack users can use [`resolve.alias`](https://webpack.js.org/configuration/resolve/#resolvealias)
+  configuration option to set up an alias like `use-form` to use within application.
+- The most generic solution would be to re-export package functionality from some
+  part of your application, alongside with your inputs. For instance, you might have
+  `/components/form/index.js` file with following content:
+  ```js
+  export * from "ok-react-use-form";
+  export * from "./inputs";
+  ```
+  And then in your logic components you might have:
+  ```js
+  import { useForm, Input } from "components/form";
+  ```
 
 ## License
 

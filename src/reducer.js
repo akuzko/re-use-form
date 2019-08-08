@@ -50,7 +50,7 @@ export default function reducer(state, action) {
       return {...state, attrs: nextAttrs, errors: nextErrors};
     }
     case "validate": {
-      const {onValid, onError} = action;
+      const {resolve, reject} = action;
       const nextErrors = {};
 
       Object.keys(validations).forEach((rule) => {
@@ -59,10 +59,10 @@ export default function reducer(state, action) {
 
       const isValid = Object.getOwnPropertyNames(nextErrors).length === 0;
 
-      if (isValid && onValid) {
-        requestAnimationFrame(() => onValid(attrs));
-      } else if (!isValid && onError) {
-        requestAnimationFrame(() => onError(nextErrors));
+      if (isValid) {
+        resolve(attrs);
+      } else {
+        reject(nextErrors);
       }
 
       return {
@@ -112,8 +112,8 @@ export function setAttrs(attrs) {
   return {type: "setAttrs", attrs};
 }
 
-export function validate(callbacks) {
-  return {type: "validate", ...callbacks};
+export function validate(resolve, reject) {
+  return {type: "validate", resolve, reject};
 }
 
 export function setError(name, error) {

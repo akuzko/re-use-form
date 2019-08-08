@@ -84,3 +84,35 @@ function stringToValidator(name) {
 function wildcard(name) {
   return name.replace(/\d+/g, "*");
 }
+
+export class ValidationPromise {
+  constructor(fn) {
+    this.promise = new Promise(fn)
+      .then((attrs) => {
+        this.success = true;
+        return attrs;
+      }, (errors) => {
+        this.errors = errors;
+      });
+  }
+
+  then(fn) {
+    this.promise = this.promise.then((result) => {
+      if (this.success) {
+        return fn(result);
+      }
+    });
+
+    return this;
+  }
+
+  catch(fn) {
+    this.promise = this.promise.then(() => {
+      if (this.errors) {
+        fn(this.errors);
+      }
+    });
+
+    return this;
+  }
+}
