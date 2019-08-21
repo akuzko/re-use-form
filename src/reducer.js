@@ -8,6 +8,26 @@ export default function reducer(state, action) {
     case "setConfig": {
       return {...state, ...resolveConfig(action.config)};
     }
+    case "addPartialValidations": {
+      const nextValidations = {...validations};
+      const {prefix, validations: partialValidations} = action;
+
+      for (const key in partialValidations) {
+        nextValidations[`${prefix}.${key}`] = partialValidations[key];
+      }
+
+      return {...state, validations: nextValidations};
+    }
+    case "removePartialValidations": {
+      const nextValidations = {...validations};
+      const {prefix, validations: partialValidations} = action;
+
+      for (const key in partialValidations) {
+        delete nextValidations[`${prefix}.${key}`];
+      }
+
+      return {...state, validations: nextValidations};
+    }
     case "setAttr": {
       const {path, value} = action;
 
@@ -102,6 +122,14 @@ export function init(attrs, config) {
 
 export function setConfig(config) {
   return {type: "setConfig", config};
+}
+
+export function addPartialValidations(prefix, validations) {
+  return {type: "addPartialValidations", prefix, validations};
+}
+
+export function removePartialValidations(prefix, validations) {
+  return {type: "removePartialValidations", prefix, validations};
 }
 
 export function setAttr(path, value) {

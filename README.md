@@ -280,6 +280,47 @@ return (
 );
 ```
 
+### Form Partials
+
+One of the cool features of `ok-react-use-form` is that it's `useForm` hook also
+provides a `usePartial` helper, which is a hook itself, and can be used to defined
+"nested" forms with their own validation and other business logic. This can help
+you improve code organization and extract independent parts into dedicated
+components for better maintainability.
+
+```jsx
+function OrderForm() {
+  const {$, get, validate, usePartial} = useForm({username: "", items: [{}, {}]}, {
+    username: "presence"
+  });
+
+  return (
+    <div>
+      <Input { ...$("username") } className="username" />
+      { get("items").map((item, i) => (
+          <ItemForm key={ i } usePartial={ usePartial } index={ i } />
+        ))
+      }
+      <button onClick={ () => validate() } className="validate">Validate</button>
+    </div>
+  );
+}
+
+function ItemForm({usePartial, index}) {
+  const {$} = usePartial(`items.${index}`, {
+    name: "presence"
+  });
+
+  return <Input { ...$("name") } className={ `items-${index}` } />;
+}
+```
+
+There are couple of limitations in `usePartial` hook, however:
+- As second parameter it can accept only validation rules object (i.e. it is
+not configurable in any other way)
+- Validation is memoized for the lifespan of the component, i.e. it cannot
+be dynamic.
+
 ### Internationalized Validation Error Messages
 
 Depending on adopted i18n solution in your application, there are different ways of

@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useCallback } from "react";
-import Input from "./Input";
-import Checkbox from "./Checkbox";
+import { Input, Checkbox } from "../inputs";
 
-import { useForm } from "../../src";
+import { useForm } from "../../../src";
 
 function useTranslation() {
   return {t};
@@ -18,7 +17,7 @@ const initialForm = {
   items: []
 };
 
-export default function Form() {
+export default function MonoForm() {
   const [saving, setSaving] = useState(false);
   const [validationEnabled, setValidationEnabled] = useState(true);
   const {t} = useTranslation();

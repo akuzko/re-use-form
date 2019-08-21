@@ -11,6 +11,7 @@ import reducer, {
   reset as doReset
 } from "./reducer";
 import { ValidationPromise } from "./validations";
+import buildPartialHook from "./buildPartialHook";
 import HandlersCache from "./HandlersCache";
 
 export function useForm(initialAttrs, config = {}) {
@@ -61,6 +62,8 @@ export function useForm(initialAttrs, config = {}) {
     };
   };
 
+  const usePartial = buildPartialHook({dispatch, get, set, getError, input});
+
   return {
     get,
     set,
@@ -68,6 +71,7 @@ export function useForm(initialAttrs, config = {}) {
     setError,
     setErrors,
     reset,
+    usePartial,
     validate,
     withValidation,
     input,

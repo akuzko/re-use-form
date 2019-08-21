@@ -7,6 +7,23 @@ import { useForm, defValidation } from "../src";
 import Input from "./components/Input";
 
 describe("useForm", () => {
+  before(() => {
+    // one-time definition of global validations to be used in tests bellow
+    defValidation("presence", (value, {message}) => {
+      if (!value || (Array.isArray(value) && !value.length)) {
+        return message || "Can't be empty";
+      }
+    });
+
+    defValidation("numericality", (value, {lessThan, lessThanMessage}) => {
+      if (!value) return;
+
+      if (+value >= lessThan) {
+        return lessThanMessage || `Should be less than ${lessThan}`;
+      }
+    });
+  });
+
   function Form() {
     const {$} = useForm({foo: "foo"});
 
@@ -68,22 +85,6 @@ describe("useForm", () => {
   });
 
   describe("validations", () => {
-    before(() => {
-      defValidation("presence", (value, {message}) => {
-        if (!value || (Array.isArray(value) && !value.length)) {
-          return message || "Can't be empty";
-        }
-      });
-
-      defValidation("numericality", (value, {lessThan, lessThanMessage}) => {
-        if (!value) return;
-
-        if (+value >= lessThan) {
-          return lessThanMessage || `Should be less than ${lessThan}`;
-        }
-      });
-    });
-
     function Form() {
       const {$, validate} = useForm({foo: ""}, {
         foo: "presence"
@@ -292,6 +293,44 @@ describe("useForm", () => {
           });
         }
       });
+    });
+  });
+
+  describe("form partials", () => {
+    function OrderForm() {
+      const {$, get, validate, usePartial} = useForm({username: "", items: [{}, {}]}, {
+        username: "presence"
+      });
+
+      return (
+        <div>
+          <Input { ...$("username") } className="username" />
+          { get("items").map((item, i) => (
+              <ItemForm key={ i } usePartial={ usePartial } index={ i } />
+            ))
+          }
+          <button onClick={ () => validate() } className="validate">Validate</button>
+        </div>
+      );
+    }
+
+    // eslint-disable-next-line react/prop-types
+    function ItemForm({usePartial, index}) {
+      const {$} = usePartial(`items.${index}`, {
+        name: "presence"
+      });
+
+      return <Input { ...$("name") } className={ `items-${index}` } />;
+    }
+
+    it("validates inputs rendered via `usePartial` helper", () => {
+      const wrapper = mount(<OrderForm />);
+
+      expect(wrapper.find(".error")).to.have.lengthOf(0);
+      wrapper.find(".validate").simulate("click");
+      expect(wrapper.find(".username .error")).to.have.lengthOf(1);
+      expect(wrapper.find(".items-0 .error")).to.have.lengthOf(1);
+      expect(wrapper.find(".items-1 .error")).to.have.lengthOf(1);
     });
   });
 });

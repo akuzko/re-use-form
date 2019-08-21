@@ -1,6 +1,11 @@
 import { defValidation } from "../../src";
 
-defValidation("presence", (value, {t, message}) => {
+function defaultT(key) {
+  return key.match(/\.([^.]+)$/)[1]
+    .replace(/^.|_./g, s => s[1] ? ` ${s[1].toUpperCase()}` : s[0].toUpperCase());
+}
+
+defValidation("presence", (value, {t = defaultT, message}) => {
   if (!value) {
     return message || t("form.validations.cant_be_blank");
   }
@@ -10,7 +15,7 @@ defValidation("presence", (value, {t, message}) => {
   }
 });
 
-defValidation("format", (value, {t, message, pattern}) => {
+defValidation("format", (value, {t = defaultT, message, pattern}) => {
   if (!value) return;
 
   if (!pattern.test(value)) {

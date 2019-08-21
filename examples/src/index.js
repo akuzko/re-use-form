@@ -1,7 +1,7 @@
 import React from "react";
 import { render } from "react-dom";
-import Form from "./Form";
+import Main from "./Main";
 
 import "./validations";
 
-render(<Form />, document.getElementById("root"));
+render(<Main />, document.getElementById("root"));
