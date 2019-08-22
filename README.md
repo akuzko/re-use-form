@@ -159,20 +159,20 @@ mentioned helpers are about.
 ### Form Validations
 
 `ok-react-use-form` provides a very easy way to declare form validations,
-which will automatically validate inputs on change when required. But before
-validations are used, they should be defined. Each validation rule is defined
-via `defValidation` function call. Validation handler function used in this
-call should accept two arguments - input's `value` and validation `options`.
-Even considering that not all validation rules need additional options for
-their business logic, the most common use case scenario is to allow user
-to specify custom error message when validation is failed.
+which will automatically validate inputs on change when required. Each
+validation rule is defined via `defValidation` function call. Validation
+handler function used in this call should accept two arguments - input's
+`value` and validation `options`. Even considering that not all validation
+rules need additional options for their business logic, the most common use
+case scenario is to allow user to specify custom error message when validation
+is failed.
 
 ```js
 import { defValidation } from "ok-react-use-form";
 
-// Define very primitive validations for demonstration purposes.
+// Bellow are very primitive validations defined for demonstration purposes.
 // All validation rules should be defined only once on your app initialization.
-defValidations("presence", (value, {message}) => {
+defValidation("presence", (value, {message}) => {
   if (!value) {
     return message || "Cannot be blank";
   }
@@ -256,12 +256,32 @@ It's up to you how to define validation rules. But as for suggested solution,
 you might want to take a look at [`validate.js`](https://validatejs.org/) project
 and adopt it's functionality for validation definitions.
 
+#### Wildcard Validation
+
+If your form deals with collections of items, it is possible to declare validation
+for them using wildcards:
+
+```jsx
+function OrderForm() {
+  const {$} = useForm({items: []}, {
+    "email": ["presence", "email"],
+    "items.*.name": "presence",
+    "items.*.count": {
+      presence: true,
+      numericality: {greaterThan: 10}
+    }
+  });
+
+  // ...
+}
+````
+
 #### `withValidation` Helper
 
 It's pretty common to perform some action as soon as form has no errors and
 validation passes. For such case there is `withValidation` helper that accepts
 a callback and wraps it in validation routines. This callback will be called
-only if for had no errors:
+only if form had no errors:
 
 ```jsx
 const {$, withValidation} = useForm({}, {
@@ -280,17 +300,17 @@ return (
 );
 ```
 
-### Form Partials
+### Form Partials (`usePartial` Helper Hook)
 
-One of the cool features of `ok-react-use-form` is that it's `useForm` hook also
-provides a `usePartial` helper, which is a hook itself, and can be used to defined
+One of the features of `ok-react-use-form` package is that it's `useForm` hook also
+provides a `usePartial` helper, which is a hook itself, and can be used to define
 "nested" forms with their own validation and other business logic. This can help
 you improve code organization and extract independent parts into dedicated
 components for better maintainability.
 
 ```jsx
 function OrderForm() {
-  const {$, get, validate, usePartial} = useForm({username: "", items: [{}, {}]}, {
+  const {$, get, validate, usePartial} = useForm({username: "", items: [{}]}, {
     username: "presence"
   });
 
@@ -301,17 +321,23 @@ function OrderForm() {
           <ItemForm key={ i } usePartial={ usePartial } index={ i } />
         ))
       }
-      <button onClick={ () => validate() } className="validate">Validate</button>
+      <button onClick={ validate }>Validate</button>
     </div>
   );
 }
 
 function ItemForm({usePartial, index}) {
   const {$} = usePartial(`items.${index}`, {
-    name: "presence"
+    name: "presence",
+    count: "presence"
   });
 
-  return <Input { ...$("name") } className={ `items-${index}` } />;
+  return (
+    <div>
+      <Input { ...$("name") } />
+      <Input { ...$("count") } />
+    </div>
+  );
 }
 ```
 

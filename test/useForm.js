@@ -309,7 +309,7 @@ describe("useForm", () => {
               <ItemForm key={ i } usePartial={ usePartial } index={ i } />
             ))
           }
-          <button onClick={ () => validate() } className="validate">Validate</button>
+          <button onClick={ validate } className="validate">Validate</button>
         </div>
       );
     }
