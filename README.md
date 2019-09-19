@@ -4,19 +4,19 @@ React Form Hook
 Simple and robust form hook for [React](https://facebook.github.io/react/) with validation
 support and simple internationalization.
 
-[![build status](https://img.shields.io/travis/akuzko/ok-react-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/ok-react-use-form)
+[![build status](https://img.shields.io/travis/akuzko/re-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/re-use-form)
 
 ## Installation
 
 ```
-npm install --save ok-react-use-form
+npm install --save re-use-form
 ```
 
 ## Usage
 
 ### Input Prerequisites
 
-`ok-react-use-form` provides a `useForm` and `useControlledForm` hooks that are
+`re-use-form` provides a `useForm` and `useControlledForm` hooks that are
 intended to be used alongside with custom **Input** components. An **Input** is
 any component that consumes three properties: `value`, `error` and `onChange`
 (note that there is also `name` property supplied for input by form's helpers).
@@ -25,13 +25,13 @@ supplied in props.
 
 ### `useForm` Hook
 
-`ok-react-use-form` provides `useForm` hook for uncontrolled forms. It accepts
+`re-use-form` provides `useForm` hook for uncontrolled forms. It accepts
 object with initial form attributes and optional config. Config can be used to
 define client-side validations (see *"Form Validations"* section bellow) and to
 ease internationalization.
 
 ```js
-import { useForm } from 'ok-react-use-form';
+import { useForm } from 're-use-form';
 import { TextField, Select } from 'my-components/inputs';
 
 function MyForm({onSave}) {
@@ -62,6 +62,15 @@ over and over again. For this reason, `useForm` hook also provides a `$` helper
 that does the same. Basically, it's the same approach as used in
 [`react-form-base`](https://github.com/akuzko/react-form-base) package. All examples
 bellow will use `$` helper method as more common one.
+
+Keep in mind that although `$` is available by default, you can use any alias
+you find convenient when destructuring form helpers object returned by hook:
+
+```js
+const {input: inp} = useForm({});
+
+// and then you can use `<Input { ...inp("name") } />`
+```
 
 ### Hook Config
 
@@ -158,7 +167,7 @@ mentioned helpers are about.
 
 ### Form Validations
 
-`ok-react-use-form` provides a very easy way to declare form validations,
+`re-use-form` provides a very easy way to declare form validations,
 which will automatically validate inputs on change when required. Each
 validation rule is defined via `defValidation` function call. Validation
 handler function used in this call should accept two arguments - input's
@@ -168,7 +177,7 @@ case scenario is to allow user to specify custom error message when validation
 is failed.
 
 ```js
-import { defValidation } from "ok-react-use-form";
+import { defValidation } from "re-use-form";
 
 // Bellow are very primitive validations defined for demonstration purposes.
 // All validation rules should be defined only once on your app initialization.
@@ -201,7 +210,7 @@ custom function validations, if needed)
 ```js
 // UserForm.js
 // ...other imports...
-import { useForm } from 'ok-react-use-form';
+import { useForm } from 're-use-form';
 
 function UserForm() {
   const {$, validate} = useForm({}, {
@@ -261,7 +270,7 @@ and adopt it's functionality for validation definitions.
 If your form deals with collections of items, it is possible to declare validation
 for them using wildcards:
 
-```jsx
+```js
 function OrderForm() {
   const {$} = useForm({items: []}, {
     "email": ["presence", "email"],
@@ -283,7 +292,7 @@ validation passes. For such case there is `withValidation` helper that accepts
 a callback and wraps it in validation routines. This callback will be called
 only if form had no errors:
 
-```jsx
+```js
 const {$, withValidation} = useForm({}, {
   name: "presence"
 });
@@ -302,13 +311,13 @@ return (
 
 ### Form Partials (`usePartial` Helper Hook)
 
-One of the features of `ok-react-use-form` package is that it's `useForm` hook also
+One of the features of `re-use-form` package is that it's `useForm` hook also
 provides a `usePartial` helper, which is a hook itself, and can be used to define
 "nested" forms with their own validation and other business logic. This can help
 you improve code organization and extract independent parts into dedicated
 components for better maintainability.
 
-```jsx
+```js
 function OrderForm() {
   const {$, get, validate, usePartial} = useForm({username: "", items: [{}]}, {
     username: "presence"
@@ -360,7 +369,7 @@ with gettext-like usage. Probably, this approach provides the most simple and
 easy-to-use way to internationalize error messages:
 
 ```js
-import { defValidation } from "ok-react-use-form";
+import { defValidation } from "re-use-form";
 import { t } from "ttag";
 
 defValidation("presence", (value, {message}) => {
@@ -381,7 +390,7 @@ this `t` function specified only once without need to explicitly mention it
 over and over again:
 
 ```js
-import { defValidation } from "ok-react-use-form";
+import { defValidation } from "re-use-form";
 
 defValidation("presence", (value, {t, message}) => {
   if (!value) {
@@ -390,8 +399,8 @@ defValidation("presence", (value, {t, message}) => {
 });
 ```
 And then in form:
-```jsx
-import { useForm } from "ok-react-use-form";
+```js
+import { useForm } from "re-use-form";
 import { useTranslation } from "react-i18next";
 
 export function Form() {
@@ -439,25 +448,21 @@ export function Form() {
 - `reset(initial)` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
 
-### Better Naming
+### More Convenient Usage
 
-Naming variables is hard. Naming npm packages is even harder. Especially considering
-that names can be taken. Since `ok-react-use-form` is pretty cumbersome to write
-over and over again, there are few options that can improve usage experience:
+It is recommended to re-export package functionality from some part of your
+application, alongside with your inputs. For instance, you might have
+`/components/form/index.js` file with following content:
 
-- Webpack users can use [`resolve.alias`](https://webpack.js.org/configuration/resolve/#resolvealias)
-  configuration option to set up an alias like `use-form` to use within application.
-- The most generic solution would be to re-export package functionality from some
-  part of your application, alongside with your inputs. For instance, you might have
-  `/components/form/index.js` file with following content:
-  ```js
-  export * from "ok-react-use-form";
-  export * from "./inputs";
-  ```
-  And then in your logic components you might have:
-  ```js
-  import { useForm, Input } from "components/form";
-  ```
+```js
+export * from "re-use-form";
+export * from "./inputs";
+```
+
+And then in your logic components you might have:
+```js
+import { useForm, Input } from "components/form";
+```
 
 ## License
 

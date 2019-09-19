@@ -1,5 +1,5 @@
 {
-  "name": "ok-react-use-form",
+  "name": "re-use-form",
   "version": "2.1.0",
   "description": "Easy-to-use React form hooks with built-in validation support",
   "main": "dist/index.js",
@@ -23,7 +23,7 @@
     "i18n"
   ],
   "author": "Artem Kuzko <a.kuzko@gmail.com> (https://github.com/akuzko)",
-  "homepage": "https://github.com/akuzko/ok-react-use-form",
+  "homepage": "https://github.com/akuzko/re-use-form",
   "license": "MIT",
   "peerDependencies": {
     "react": "^16.8.6",
