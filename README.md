@@ -16,16 +16,15 @@ npm install --save re-use-form
 
 ### Input Prerequisites
 
-`re-use-form` provides a `useForm` and `useControlledForm` hooks that are
-intended to be used alongside with custom **Input** components. An **Input** is
-any component that consumes three properties: `value`, `error` and `onChange`
-(note that there is also `name` property supplied for input by form's helpers).
-It also has to provide it's `value` as first argument to `onChange` function
-supplied in props.
+`re-use-form` provides a `useForm` hook that is intended to be used alongside
+with custom **Input** components. An **Input** is any component that consumes
+three properties: `value`, `error` and `onChange` (note that there is also `name`
+property supplied for input by form's helpers). It also has to provide it's
+`value` as first argument to `onChange` function supplied in props.
 
 ### `useForm` Hook
 
-`re-use-form` provides `useForm` hook for uncontrolled forms. It accepts
+`useForm` hook is primary hook provided by the package. It accepts
 object with initial form attributes and optional config. Config can be used to
 define client-side validations (see *"Form Validations"* section bellow) and to
 ease internationalization.
@@ -75,9 +74,9 @@ const {input: inp} = useForm({});
 ### Hook Config
 
 `useForm` hook accepts a config as a second argument. This `config` object is
-mainly used for declaring form validations and **is memoized by default**. Also,
-config itself may be replaced by validation rules (see *"Form Validations"* section
-bellow), removing need of extra nesting.
+mainly used for declaring form validations and **is memoized with no dependencies by default**.
+Also, config itself may be replaced by validation rules (see *"Form Validations"*
+section bellow), removing need of extra nesting.
 
 Bellow are examples of `useForm` hook call with valid configs:
 ```js
@@ -87,19 +86,16 @@ const {$} = useForm({}, {
 });
 ```
 
-To be able to have dynamic config, you should disable default memoization by using
-`useMemo: false` config option. But doing just this is **highly discouraged**, since
-on each render hook will receive new object literal re-setting config with no
-real changes every time. So whenever you disable default memoization, make sure
-to provide custom one with proper dependencies:
+To be able to have dynamic config, you should specify list of cofig dependencies
+under `deps` config property:
 ```js
 const [validationEnabled, setValidationEnabled] = useState(false);
-const {$} = useForm({}, useMemo(() => ({
-  useMemo: false,
+const {$} = useForm({}, {
+  deps: [validationEnabled],
   validations: validationEnabled && {
     username: "presence"
   }
-}), [validationEnabled]));
+});
 ```
 
 Finally, in cases when validation setup needs to share common options for all
@@ -145,7 +141,7 @@ function Form() {
 ### Purity Support
 
 All of the helper functions returned by `useForm` hook, with the exception of
-`get` and `getError` functions that depends on form attributes and errors whenever
+`get` and `getError` functions that depend on form attributes and errors whenever
 they change, are persistent and do not change on per render basis. The same goes
 for values returned by `$`/`input` helper - as long as on-change handler passed
 to `$` function is persistent (or if it was omitted), it's `onChange` property
@@ -353,8 +349,7 @@ function ItemForm({usePartial, index}) {
 There are couple of limitations in `usePartial` hook, however:
 - As second parameter it can accept only validation rules object (i.e. it is
 not configurable in any other way)
-- Validation is memoized for the lifespan of the component, i.e. it cannot
-be dynamic.
+- Dynamic config and validation is not supported when using form partials.
 
 ### Internationalized Validation Error Messages
 

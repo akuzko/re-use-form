@@ -30,8 +30,8 @@ export default function MonoForm() {
     withValidation,
     reset: doReset,
     validate: doValidate
-  } = useForm(initialForm, useMemo(() => ({
-    useMemo: false,
+  } = useForm(initialForm, {
+    deps: [validationEnabled],
     validations: validationEnabled && {
       defaultOptions: {t},
       rules: {
@@ -46,7 +46,7 @@ export default function MonoForm() {
         "items.*.count": "presence"
       }
     }
-  }), [validationEnabled]));
+  });
 
   const items = get("items");
 

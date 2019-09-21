@@ -156,7 +156,7 @@ export function reset(attrs) {
   return {type: "reset", attrs};
 }
 
-const CONFIG_PROPS = ["useMemo", "pureHandlers", "validations"];
+const CONFIG_PROPS = ["deps", "pureHandlers", "validations"];
 
 function isConfig(obj) {
   for (const key in obj) {

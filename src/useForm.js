@@ -18,10 +18,10 @@ export function useForm(initialAttrs, config = {}) {
   const [{attrs, errors, pureHandlers}, dispatch] = useReducer(reducer, init(initialAttrs, config));
 
   useEffect(() => {
-    if (config.useMemo === false) {
+    if (config.deps) {
       dispatch(setConfig(config));
     }
-  }, [config]);
+  }, config.deps || []);
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
 
