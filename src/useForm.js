@@ -35,9 +35,9 @@ export function useForm(initialAttrs, config = {}) {
     }
   }, []);
 
-  const validate = useCallback(() => {
+  const validate = useCallback((path) => {
     return new ValidationPromise((resolve, reject) => {
-      dispatch(doValidate(resolve, reject));
+      dispatch(doValidate(path, resolve, reject));
     });
   }, []);
 
@@ -45,7 +45,12 @@ export function useForm(initialAttrs, config = {}) {
 
   const setError = useCallback((name, error) => dispatch(doSetError(name, error)), []);
 
-  const setErrors = useCallback((errors) => dispatch(doSetErrors(errors)), []);
+  const setErrors = useCallback((errors) => {
+    if (errors && typeof errors === "object" && errors.constructor === Object) {
+      return dispatch(doSetErrors(errors));
+    }
+    throw errors;
+  }, []);
 
   const reset = useCallback((attrs) => dispatch(doReset(attrs)), []);
 

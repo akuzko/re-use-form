@@ -31,7 +31,7 @@ export default function reducer(state, action) {
     case "setAttr": {
       const {path, value} = action;
 
-      if (shouldValidateOnChange) {
+      if (shouldValidateOnChange || errors[path]) {
         const nextAttrs = update(attrs, path, value);
         const nextErrors = {[path]: validateAttr(validations, validationOptions, path, value)};
 
@@ -91,6 +91,24 @@ export default function reducer(state, action) {
         shouldValidateOnChange: true
       };
     }
+    case "validatePath": {
+      const {path, resolve, reject} = action;
+      const value = attrs[path];
+      const error = validateAttr(validations, validationOptions, path, value);
+
+      if (error) {
+        reject({[path]: error});
+      } else {
+        resolve(value);
+      }
+
+      return {
+        ...state,
+        errors: {
+          ...errors, [path]: error
+        }
+      };
+    }
     case "setError": {
       const {name, error} = action;
 
@@ -140,8 +158,12 @@ export function setAttrs(attrs) {
   return {type: "setAttrs", attrs};
 }
 
-export function validate(resolve, reject) {
-  return {type: "validate", resolve, reject};
+export function validate(path, resolve, reject) {
+  if (typeof path === "string") {
+    return {type: "validatePath", path, resolve, reject};
+  } else {
+    return {type: "validate", resolve, reject};
+  }
 }
 
 export function setError(name, error) {

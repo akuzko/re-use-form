@@ -146,6 +146,30 @@ describe("useForm", () => {
       });
     });
 
+    describe("validating single input value stand-alone", () => {
+      function Form() {
+        const {$, validate} = useForm({foo: ""}, {
+          foo: "presence"
+        });
+
+        const validateFoo = () => validate("foo");
+
+        return (
+          <div>
+            <Input { ...$("foo") } onBlur={ validateFoo } className="foo" />
+          </div>
+        );
+      }
+
+      it("validates input on blur event", () => {
+        const wrapper = mount(<Form />);
+        wrapper.find("input.foo").simulate("blur");
+        expect(wrapper.find(".error")).to.have.lengthOf(1);
+        wrapper.find("input.foo").simulate("change", {target: {value: "foo"}});
+        expect(wrapper.find(".error")).to.have.lengthOf(0);
+      });
+    });
+
     describe("complex forms of value validation", () => {
       function Form() {
         const {$, validate} = useForm({foo: ""}, {

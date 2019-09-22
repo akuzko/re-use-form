@@ -429,19 +429,25 @@ export function Form() {
   - `get('foos.1.bar') // => 'bak'`
   - `get() // returns whole form's attributes object`
 - `set(name, value)` - sets a `value` for an input with a specified `name`.
-- `set(object)` - sets multiple values at once. Each key in the object
-  corresponds to input name, and values are input values.
-- `errors` - object representing all validation errors.
+- `set(attrs)` - when object is provided, sets multiple values at once.
+  Each key in the object corresponds to input name, and values are input values.
 - `getError(name)` - returns validation error for an input with a given name.
 - `setErrors(errors)` - sets `errors` (object) as form's errors.
 - `setError(name, error)` - sets an error for a single input with a given name.
-- `validate({onValid, onError})` - performs form validations. Accepts an object
-  with `onValid` and `onError` callbacks that will be called in case of
-  successful/failed validation correspondingly.
+- `validate()` - performs form validations. Return a promise-like object that
+  responds to `then` and `catch` methods. On successful validation, resolves
+  promise with form attributes. On failed validation, rejects promise with
+  validation errors. It is safe to omit `catch` clause - no exception will
+  leak outside.
+- `validate(name)` - validates a single input. Just like form validation,
+  can be chained with `then` and `catch` callbacks. On successful validation,
+  resolves promise with input value. On failed, rejects promise with errors
+  object containing single key-value corresponding to input name and error.
 - `withValidation(callback)` - performs form validation and executes a callback
   if there were no errors.
-- `reset(initial)` - clears form errors and sets form attributes provided value.
+- `reset([attrs])` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
+- `usePartial` - helper hook used to define form partials.
 
 ### More Convenient Usage
 

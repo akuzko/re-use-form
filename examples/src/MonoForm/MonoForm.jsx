@@ -27,6 +27,7 @@ export default function MonoForm() {
     set,
     getError,
     setError,
+    setErrors,
     withValidation,
     reset: doReset,
     validate: doValidate
@@ -84,7 +85,11 @@ export default function MonoForm() {
     doValidate()
       .then(attrs => console.log("Form is valid", attrs))
       .catch(errors => console.log("Form has errors", errors));
-  });
+  }, []);
+
+  const validateUsername = useCallback(() => {
+    doValidate("username");
+  }, []);
 
   const save = useCallback(() => {
     setSaving(true);
@@ -107,7 +112,7 @@ export default function MonoForm() {
       </div>
 
       <div className="username">
-        <Input { ...$("username", changeUsername) } placeholder="Username" />
+        <Input { ...$("username", changeUsername) } onBlur={ validateUsername } placeholder="Username" />
       </div>
 
       { getError("items") &&
