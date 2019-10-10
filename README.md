@@ -5,6 +5,7 @@ Simple and robust form hook for [React](https://facebook.github.io/react/) with 
 support and simple internationalization.
 
 [![build status](https://img.shields.io/travis/akuzko/re-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/re-use-form)
+[![npm version](https://img.shields.io/npm/v/re-use-form.svg?style=flat-square)](https://www.npmjs.com/package/re-use-form)
 
 ## Installation
 
@@ -167,10 +168,12 @@ mentioned helpers are about.
 which will automatically validate inputs on change when required. Each
 validation rule is defined via `defValidation` function call. Validation
 handler function used in this call should accept two arguments - input's
-`value` and validation `options`. Even considering that not all validation
-rules need additional options for their business logic, the most common use
-case scenario is to allow user to specify custom error message when validation
-is failed.
+`value` and validation `options`. By default, `re-use-form` will pass
+form attributes as `attrs` option, and name of the input being validated
+as `name` option. Even if not used very often, this may become in handy
+when defining custom wildcard validations that depend on other values
+of the form. Also, the most common use case scenario is to allow user to
+specify custom error message when validation is failed.
 
 ```js
 import { defValidation } from "re-use-form";

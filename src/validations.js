@@ -34,7 +34,7 @@ function callEachValidator(validations, options, name, attrs, errors) {
 function callValueValidator(validations, options, name, value) {
   const validator = validations[name] || validations[wildcard(name)];
 
-  return callValidator(validator, value, options);
+  return callValidator(validator, value, {...options, name});
 }
 
 function callValidator(validator, value, options) {

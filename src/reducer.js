@@ -33,12 +33,13 @@ export default function reducer(state, action) {
 
       if (shouldValidateOnChange || errors[path]) {
         const nextAttrs = update(attrs, path, value);
-        const nextErrors = {[path]: validateAttr(validations, validationOptions, path, value)};
+        const fullOpts = {...validationOptions, attrs: nextAttrs};
+        const nextErrors = {[path]: validateAttr(validations, fullOpts, path, value)};
 
         if (Array.isArray(value)) {
           Object.keys(validations).forEach((rule) => {
             if (rule !== path && rule.startsWith(path)) {
-              validateRule(validations, validationOptions, rule, nextAttrs, nextErrors);
+              validateRule(validations, fullOpts, rule, nextAttrs, nextErrors);
             }
           });
         }
@@ -63,7 +64,9 @@ export default function reducer(state, action) {
         update.in(nextAttrs, path, action.attrs[path]);
 
         if (shouldValidateOnChange) {
-          nextErrors[path] = validateAttr(validations, validationOptions, path, action.attrs[path]);
+          const fullOpts = {...validationOptions, attrs: nextAttrs};
+
+          nextErrors[path] = validateAttr(validations, fullOpts, path, action.attrs[path]);
         }
       }
 
@@ -72,9 +75,10 @@ export default function reducer(state, action) {
     case "validate": {
       const {resolve, reject} = action;
       const nextErrors = {};
+      const fullOpts = {...validationOptions, attrs};
 
       Object.keys(validations).forEach((rule) => {
-        validateRule(validations, validationOptions, rule, attrs, nextErrors);
+        validateRule(validations, fullOpts, rule, attrs, nextErrors);
       });
 
       const isValid = Object.getOwnPropertyNames(nextErrors).length === 0;
@@ -94,7 +98,8 @@ export default function reducer(state, action) {
     case "validatePath": {
       const {path, resolve, reject} = action;
       const value = attrs[path];
-      const error = validateAttr(validations, validationOptions, path, value);
+      const fullOpts = {...validationOptions, attrs};
+      const error = validateAttr(validations, fullOpts, path, value);
 
       if (error) {
         reject({[path]: error});

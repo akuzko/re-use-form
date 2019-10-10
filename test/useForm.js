@@ -238,17 +238,27 @@ describe("useForm", () => {
       function Form() {
         const {get, set, $, getError, validate} = useForm({foos: []}, {
           "foos": "presence",
-          "foos.*.value": "presence"
+          "foos.*.value": ["presence", function(value, {name, attrs}) {
+            const index = +name.split(".")[1];
+            const max = attrs.foos[index].max;
+
+            if (+value > max) {
+              return `Too much (max ${max})`;
+            }
+          }]
         });
 
         const setState = () => {
-          set("foos", [{}, {value: 1}]);
+          set("foos", [{}, {value: 2, max: 1}]);
         };
 
         return (
           <div>
             { get("foos").map((_item, i) => (
-                <Input key={ i } { ...$(`foos.${i}.value`) } wrapperClassName={ `foo-${i}` } />
+                <div key={ i }>
+                  <Input { ...$(`foos.${i}.value`) } wrapperClassName={ `foo-value-${i}` } />
+                  <Input { ...$(`foos.${i}.max`) } wrapperClassName={ `foo-max-${i}` } />
+                </div>
               ))
             }
             { getError("foos") &&
@@ -266,7 +276,10 @@ describe("useForm", () => {
         expect(wrapper.find(".foos-error")).to.have.lengthOf(1);
         wrapper.find(".setState").simulate("click");
         expect(wrapper.find(".foos-error")).to.have.lengthOf(0);
-        expect(wrapper.find(".foo-0 .error")).to.have.lengthOf(1);
+        expect(wrapper.find(".foo-value-0 .error")).to.have.lengthOf(1);
+        expect(wrapper.find(".foo-value-1 .error")).to.have.lengthOf(1);
+        wrapper.find(".foo-value-1 input").simulate("change", {target: {value: "1"}});
+        expect(wrapper.find(".foo-value-1 .error")).to.have.lengthOf(0);
       });
     });
 
