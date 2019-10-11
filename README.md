@@ -243,7 +243,7 @@ function UserForm() {
         // It is safe to omit this `.catch` closure - no
         // exception will be thrown.
       });
-  });
+  }, []);
 
   return (
     <>
@@ -264,6 +264,39 @@ It's up to you how to define validation rules. But as for suggested solution,
 you might want to take a look at [`validate.js`](https://validatejs.org/) project
 and adopt it's functionality for validation definitions.
 
+#### Validation Dependencies
+
+Sometimes your inputs can have custom validation that depends on values of
+other inputs. In such cases, when form is in "validate on change" state,
+validation rules on dependent inputs should be triggered whenever their
+dependencies change. Such validation with dependencies is defined by using
+object with `rules` and `deps` properties, where `rules` specify any acceptable
+validation rules, and `deps` is an array of dependency input names.
+
+For example:
+
+```js
+function ItemForm() {
+  const {$} = useForm({}, {
+    min: ["presence", "numericality"],
+    max: {
+      rules: [
+        "presence",
+        "numericality",
+        function(value, {attrs}) {
+          if (value <= attrs.min) {
+            return "Should be greated than 'min'";
+          }
+        }
+      ],
+      deps: ["min"]
+    }
+  })
+}
+```
+And now, if form has any errors rendered, `max` input will be validated whenever
+its `min` dependency input changes.
+
 #### Wildcard Validation
 
 If your form deals with collections of items, it is possible to declare validation
@@ -282,7 +315,34 @@ function OrderForm() {
 
   // ...
 }
-````
+```
+
+It is also possible to specify dependencies for wildcard validation:
+
+```js
+function OrderForm() {
+  const {$} = useForm({items: []}, {
+    "items.*.id": "presence",
+    "items.*.min": "presence",
+    "items.*.max": {
+      rules: [
+        "presence",
+        function(value, {name, attrs}) {
+          const index = +name.split(".")[1];
+
+          if (value <= attrs.items[index].min) {
+            return `Should be greated than ${attrs.items[index].min}`;
+          }
+        }
+      ],
+      deps: ["items.*.min"]
+    }
+  });
+}
+```
+
+Keep in mind, though, that such wildcard dependency means that change of
+_any_ `min` input will trigger validation of _every_ `max` input.
 
 #### `withValidation` Helper
 
@@ -296,14 +356,14 @@ const {$, withValidation} = useForm({}, {
   name: "presence"
 });
 
-const save = (attrs) => {
+const save = withValidation((attrs) => {
   // send `attrs` to server
-};
+});
 
 return (
   <>
     <Input { ...$("name") } />
-    <button onClick={ withValidation(save) }>Submit</button>
+    <button onClick={ save }>Submit</button>
   </>
 );
 ```

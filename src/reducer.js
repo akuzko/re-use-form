@@ -1,8 +1,8 @@
-import { validateAttr, validateRule } from "./validations";
+import { validateAttr, validateRule, wildcard } from "./validations";
 import update from "update-js";
 
 export default function reducer(state, action) {
-  const {attrs, errors, shouldValidateOnChange, validations, validationOptions} = state;
+  const {attrs, errors, shouldValidateOnChange, validations, validationOptions, validationDeps} = state;
 
   switch (action.type) {
     case "setConfig": {
@@ -35,11 +35,16 @@ export default function reducer(state, action) {
         const nextAttrs = update(attrs, path, value);
         const fullOpts = {...validationOptions, attrs: nextAttrs};
         const nextErrors = {[path]: validateAttr(validations, fullOpts, path, value)};
+        const depsToValidate = validationDeps[path] || validationDeps[wildcard(path)];
+
+        if (depsToValidate) {
+          depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors));
+        }
 
         if (Array.isArray(value)) {
           Object.keys(validations).forEach((rule) => {
             if (rule !== path && rule.startsWith(path)) {
-              validateRule(validations, fullOpts, rule, nextAttrs, nextErrors);
+              validateRule(validations, fullOpts, rule, nextErrors);
             }
           });
         }
@@ -65,6 +70,11 @@ export default function reducer(state, action) {
 
         if (shouldValidateOnChange) {
           const fullOpts = {...validationOptions, attrs: nextAttrs};
+          const depsToValidate = validationDeps[path] || validationDeps[wildcard(path)];
+
+          if (depsToValidate) {
+            depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors));
+          }
 
           nextErrors[path] = validateAttr(validations, fullOpts, path, action.attrs[path]);
         }
@@ -78,10 +88,10 @@ export default function reducer(state, action) {
       const fullOpts = {...validationOptions, attrs};
 
       Object.keys(validations).forEach((rule) => {
-        validateRule(validations, fullOpts, rule, attrs, nextErrors);
+        validateRule(validations, fullOpts, rule, nextErrors);
       });
 
-      const isValid = Object.getOwnPropertyNames(nextErrors).length === 0;
+      const isValid = !Object.values(nextErrors).some(Boolean);
 
       if (isValid) {
         resolve(attrs);
@@ -203,16 +213,40 @@ function resolveConfig(config) {
   }
 
   const validationOptions = {};
-  let validations = config.validations || {};
+  let validationsConfig = config.validations || {};
 
-  if ("defaultOptions" in validations) {
-    Object.assign(validationOptions, validations.defaultOptions);
-    validations = validations.rules;
+  if ("defaultOptions" in validationsConfig) {
+    Object.assign(validationOptions, validationsConfig.defaultOptions);
+    validationsConfig = validationsConfig.rules;
   }
+
+  const [validationDeps, validations] = extractValidationDeps(validationsConfig);
 
   return {
     pureHandlers: config.pureHandlers !== false && typeof WeakMap !== "undefined",
     validationOptions,
-    validations
+    validations,
+    validationDeps
   };
+}
+
+function extractValidationDeps(validationsConfig) {
+  const validations = {...validationsConfig};
+  const inputDeps = {};
+
+  for (const key in validations) {
+    if (typeof validations[key] === "object" &&
+        "rules" in validations[key] && "deps" in validations[key]
+    ) {
+      validations[key].deps.forEach((dep) => {
+        if (!(dep in inputDeps)) {
+          inputDeps[dep] = [];
+        }
+        inputDeps[dep].push(key);
+      });
+      validations[key] = validations[key].rules;
+    }
+  }
+
+  return [inputDeps, validations];
 }

@@ -10,24 +10,20 @@ export function validateAttr(validations, options, name, value) {
   return callValueValidator(validations, options, name, value);
 }
 
-export function validateRule(validations, options, name, attrs, errors) {
+export function validateRule(validations, options, name, errors) {
   if (name.includes("*")) {
-    callEachValidator(validations, options, name, attrs, errors);
+    callEachValidator(validations, options, name, errors);
   } else {
-    const error = callValueValidator(validations, options, name, get(attrs, name));
-
-    if (error) {
-      errors[name] = error;
-    }
+    errors[name] = callValueValidator(validations, options, name, get(options.attrs, name));
   }
 }
 
-function callEachValidator(validations, options, name, attrs, errors) {
+function callEachValidator(validations, options, name, errors) {
   const match = name.match(/^([^*]+)\.\*(.+)?$/);
   const [collectionName, rest = ""] = match.slice(1);
 
-  (get(attrs, collectionName) || []).forEach((_item, i) => {
-    validateRule(validations, options, `${collectionName}.${i}${rest}`, attrs, errors);
+  (get(options.attrs, collectionName) || []).forEach((_item, i) => {
+    validateRule(validations, options, `${collectionName}.${i}${rest}`, errors);
   });
 }
 
@@ -81,7 +77,7 @@ function stringToValidator(name) {
   return validator;
 }
 
-function wildcard(name) {
+export function wildcard(name) {
   return name.replace(/\d+/g, "*");
 }
 

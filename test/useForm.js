@@ -234,22 +234,25 @@ describe("useForm", () => {
       });
     });
 
-    describe("complex validation with wildcards", () => {
+    describe("complex validation with wildcards and dependencies", () => {
       function Form() {
         const {get, set, $, getError, validate} = useForm({foos: []}, {
           "foos": "presence",
-          "foos.*.value": ["presence", function(value, {name, attrs}) {
-            const index = +name.split(".")[1];
-            const max = attrs.foos[index].max;
+          "foos.*.value": {
+            rules: ["presence", (value, {name, attrs}) => {
+              const index = +name.split(".")[1];
+              const max = attrs.foos[index].max;
 
-            if (+value > max) {
-              return `Too much (max ${max})`;
-            }
-          }]
+              if (+value > max) {
+                return `Too much (max ${max})`;
+              }
+            }],
+            deps: ["foos.*.max"]
+          }
         });
 
         const setState = () => {
-          set("foos", [{}, {value: 2, max: 1}]);
+          set("foos", [{}, {value: 3, max: 2}]);
         };
 
         return (
@@ -270,7 +273,7 @@ describe("useForm", () => {
         );
       }
 
-      it("allows to use wildcard validation", () => {
+      it("allows to use wildcard validation with input dependencies", () => {
         const wrapper = mount(<Form />);
         wrapper.find(".validate").simulate("click");
         expect(wrapper.find(".foos-error")).to.have.lengthOf(1);
@@ -278,8 +281,10 @@ describe("useForm", () => {
         expect(wrapper.find(".foos-error")).to.have.lengthOf(0);
         expect(wrapper.find(".foo-value-0 .error")).to.have.lengthOf(1);
         expect(wrapper.find(".foo-value-1 .error")).to.have.lengthOf(1);
-        wrapper.find(".foo-value-1 input").simulate("change", {target: {value: "1"}});
+        wrapper.find(".foo-value-1 input").simulate("change", {target: {value: "2"}});
         expect(wrapper.find(".foo-value-1 .error")).to.have.lengthOf(0);
+        wrapper.find(".foo-max-1 input").simulate("change", {target: {value: "1"}});
+        expect(wrapper.find(".foo-value-1 .error")).to.have.lengthOf(1);
       });
     });
 

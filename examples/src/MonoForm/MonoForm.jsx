@@ -44,7 +44,17 @@ export default function MonoForm() {
         },
         "items": "presence",
         "items.*.id": "presence",
-        "items.*.count": "presence"
+        "items.*.count": "presence",
+        "items.*.maxCount": {
+          rules: function(value, {name, attrs}) {
+            const index = name.split(".")[1];
+
+            if (value && +value < +attrs.items[index].count) {
+              return `Should be greater than ${attrs.items[index].count}`;
+            }
+          },
+          deps: ["items.*.count"]
+        }
       }
     }
   });
@@ -128,6 +138,9 @@ export default function MonoForm() {
             </div>
             <div>
               <Input { ...$(`items.${i}.count`, changeItemCount) } placeholder="Item Count" />
+            </div>
+            <div>
+              <Input { ...$(`items.${i}.maxCount`, changeItemCount) } placeholder="Max Count" />
             </div>
 
             <button onClick={ () => removeItem(i) }>Remove this Item</button>
