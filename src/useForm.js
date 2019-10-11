@@ -15,7 +15,8 @@ import buildPartialHook from "./buildPartialHook";
 import HandlersCache from "./HandlersCache";
 
 export function useForm(initialAttrs, config = {}) {
-  const [{attrs, errors, pureHandlers}, dispatch] = useReducer(reducer, init(initialAttrs, config));
+  const initial = useMemo(() => init(initialAttrs, config), []);
+  const [{attrs, errors, pureHandlers}, dispatch] = useReducer(reducer, initial);
 
   useEffect(() => {
     if (config.deps) {
