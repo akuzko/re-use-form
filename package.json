@@ -10,7 +10,7 @@
     "start": "webpack-dev-server --mode development",
     "test": "mocha --require @babel/register --require @babel/polyfill --require ./test/setup.js --recursive",
     "test:watch": "npm run test -- --watch",
-    "lint": "eslint src test examples",
+    "lint": "eslint src test examples --ext .js --ext .jsx",
     "transpile": "babel src -d dist --copy-files",
     "prepublishOnly": "npm run transpile"
   },

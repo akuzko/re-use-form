@@ -27,7 +27,6 @@ export default function MonoForm() {
     set,
     getError,
     setError,
-    setErrors,
     withValidation,
     reset: doReset,
     validate: doValidate
@@ -39,7 +38,7 @@ export default function MonoForm() {
         "username": {
           presence: true,
           format: {
-            pattern: /^[\w\s\d\.,]+$/
+            pattern: /^[\w\s\d.,]+$/
           },
         },
         "items": "presence",
@@ -62,7 +61,7 @@ export default function MonoForm() {
   const items = get("items");
 
   const changeUsername = useCallback((key, value) => {
-    set(key, value.toUpperCase())
+    set(key, value.toUpperCase());
   }, []);
 
   const changeItemId = useCallback((key, value) => {
@@ -110,7 +109,7 @@ export default function MonoForm() {
   }, []);
 
   const submit = useMemo(() => {
-    return validationEnabled ? withValidation(save) : save
+    return validationEnabled ? withValidation(save) : save;
   }, [validationEnabled, save]);
 
   const reset = useCallback(() => doReset(), []);

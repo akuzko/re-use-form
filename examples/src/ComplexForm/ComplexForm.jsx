@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useCallback } from "react";
 import { Input } from "../inputs";
+import ItemForm from "./ItemForm";
 
 import { useForm } from "../../../src";
 
@@ -8,53 +9,18 @@ const initialForm = {
   items: [{}, {}, {}]
 };
 
-function ItemForm({ usePartial, index, onRemove }) {
-  const {$} = usePartial(`items.${index}`, {
-    id: "presence",
-    count: "presence"
-  });
-
-  return (
-    <div>
-      <div>
-        <Input { ...$("id") } placeholder="Item ID" />
-      </div>
-      <div>
-        <Input { ...$("count") } placeholder="Item Count" />
-      </div>
-
-      <button onClick={ onRemove }>Remove this Item</button>
-    </div>
-  );
-}
-
 export default function ComplexForm() {
   const {$, get, set, getError, reset: doReset, validate, usePartial} = useForm(initialForm, {
     username: {
       presence: true,
       format: {
-        pattern: /^[\w\s\d\.,]+$/
+        pattern: /^[\w\s\d.,]+$/
       },
     },
     items: "presence"
   });
 
   const items = get("items");
-
-  const changeItemId = useCallback((key, value) => {
-    const index = +key.split(".")[1];
-
-    set({
-      [key]: value,
-      [`items.${index}.count`]: ""
-    });
-  }, []);
-
-  const changeItemCount = useCallback((key, value) => {
-    if (isFinite(+value)) {
-      set(key, value);
-    }
-  }, []);
 
   const addItem = useCallback(() => {
     set("items", [...items, {}]);
@@ -82,7 +48,12 @@ export default function ComplexForm() {
       <button onClick={ addItem }>Add Item</button>
 
       { items.map((_item, i) => (
-          <ItemForm key={ i } usePartial={ usePartial } index={ i } onRemove={ () => removeItem(i) } />
+          <ItemForm
+            key={ i }
+            index={ i }
+            usePartial={ usePartial }
+            onRemove={ () => removeItem(i) }
+          />
         ))
       }
 

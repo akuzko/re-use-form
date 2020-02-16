@@ -1,4 +1,12 @@
-import React from 'react';
+import React from "react";
+import PropTypes from "prop-types";
+
+Checkbox.propTypes = {
+  value: PropTypes.bool,
+  onChange: PropTypes.func,
+  error: PropTypes.string,
+  label: PropTypes.string
+};
 
 export default function Checkbox({value, onChange, error, label, ...rest}) {
   const handleChange = (e) => {
