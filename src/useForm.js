@@ -71,6 +71,7 @@ export function useForm(initialAttrs, config = {}) {
   const usePartial = buildPartialHook({dispatch, get, set, getError, input});
 
   return {
+    attrs,
     get,
     set,
     getError,

@@ -2,7 +2,7 @@ import React from "react";
 import { expect } from "chai";
 import { mount } from "enzyme";
 import sinon from "sinon";
-import { useForm, defValidation } from "../src";
+import { useForm, defValidation, makeForm } from "../src";
 
 import Input from "./components/Input";
 
@@ -367,6 +367,55 @@ describe("useForm", () => {
 
     it("validates inputs rendered via `usePartial` helper", () => {
       const wrapper = mount(<OrderForm />);
+
+      expect(wrapper.find(".error")).to.have.lengthOf(0);
+      wrapper.find(".validate").simulate("click");
+      expect(wrapper.find(".username .error")).to.have.lengthOf(1);
+      expect(wrapper.find(".items-0 .error")).to.have.lengthOf(1);
+      expect(wrapper.find(".items-1 .error")).to.have.lengthOf(1);
+    });
+  });
+
+  describe("makeForm", () => {
+    const [FormProvider, useOrderForm] = makeForm({
+      initial: {
+        username: "",
+        items: [{}, {}]
+      },
+      validations: {
+        "username": "presence",
+        "items.*.name": "presence"
+      }
+    });
+
+    function OrderForm() {
+      const {$, get, validate} = useOrderForm();
+
+      return (
+        <div>
+          <Input { ...$("username") } className="username" />
+          { get("items").map((item, i) => (
+              <ItemForm key={ i } index={ i } />
+            ))
+          }
+          <button onClick={ validate } className="validate">Validate</button>
+        </div>
+      );
+    }
+
+    // eslint-disable-next-line react/prop-types
+    function ItemForm({index}) {
+      const {$} = useOrderForm();
+
+      return <Input { ...$(`items.${index}.name`) } className={ `items-${index}` } />;
+    }
+
+    it("validates inputs rendered via built helper hook", () => {
+      const wrapper = mount(
+        <FormProvider>
+          <OrderForm />
+        </FormProvider>
+      );
 
       expect(wrapper.find(".error")).to.have.lengthOf(0);
       wrapper.find(".validate").simulate("click");

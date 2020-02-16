@@ -384,7 +384,7 @@ function OrderForm() {
 
   return (
     <div>
-      <Input { ...$("username") } className="username" />
+      <Input { ...$("username") } />
       { get("items").map((item, i) => (
           <ItemForm key={ i } usePartial={ usePartial } index={ i } />
         ))
@@ -413,6 +413,71 @@ There are couple of limitations in `usePartial` hook, however:
 - As second parameter it can accept only validation rules object (i.e. it is
 not configurable in any other way)
 - Dynamic config and validation is not supported when using form partials.
+
+### Dedicated Form Hook
+
+It is also possible to define a form hook that can be available in any of your
+components without need to pass form helper functions in props. To do this,
+one can use `makeForm` helper function:
+
+```js
+const [FormProvider, useOrderForm] = makeForm({
+  initial: {username: "", items: [{}]},
+  validations: {
+    "username": "presence",
+    "items.*.name": "presence",
+    "items.*.count": "presence"
+  }
+});
+
+function OrderForm() {
+  const {$, attrs} = useOrderForm();
+
+  return (
+    <div>
+      <Input { ...$("username") } />
+      { attrs.items.map((item, i) => (
+          <ItemForm key={ i } index={ i } />
+        ))
+      }
+      <FormControls />
+    </div>
+  );
+}
+
+function FormControls() {
+  const {reset, validate} = useOrderForm();
+
+  return (
+    <div>
+      <button onClick={ reset }>Reset</button>
+      <button onClick={ validate }>Validate</button>
+    </div>
+  );
+}
+
+function ItemForm({index}) {
+  const {$} = useOrderForm();
+
+  return (
+    <div>
+      <Input { ...$(`items.${index}.name`) } />
+      <Input { ...$(`items.${index}.count`) } />
+    </div>
+  );
+}
+
+function OrderEditor() {
+  return (
+    <FormProvider>
+      <OrderForm />
+    </FormProvider>
+  );
+}
+```
+
+`makeForm` function accepts configuration object as it's single argument. Initial
+form attributes should be specified under `initial` property of this config object.
 
 ### Internationalized Validation Error Messages
 
@@ -484,7 +549,8 @@ export function Form() {
 - `$(name)`, `input(name)` - returns a set of properties for input with a given
   name. `name` is a dot-separated string, i.e. `'foo.bar'` (for `bar` property
   nested in object under `foo`), or `'foos.1'` (value at index 1 of `foos` array),
-  or `'foos.2.bar'` (`bar` property of object at index 2 of `foos` array)
+  or `'foos.2.bar'` (`bar` property of object at index 2 of `foos` array).
+- `attrs` - corresponds to form's current attributes.
 - `get(name)` - returns a value for a given name. For example, if you have an
   attributes like `{foos: [{bar: 'baz'}, {bar: 'bak'}]}`, you might have:
   - `get('foos')       // => [{bar: 'baz'}, {bar: 'bak'}]`

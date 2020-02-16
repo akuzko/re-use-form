@@ -42,6 +42,6 @@ export default function buildPartialHook({
 
     const input = (path, onChange) => formInput(`${prefix}.${path}`, onChange);
 
-    return {get, set, getError, input, $: input};
+    return {attrs, get, set, getError, input, $: input};
   };
 }
