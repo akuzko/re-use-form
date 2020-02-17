@@ -87,12 +87,14 @@ describe("useForm", () => {
   describe("validations", () => {
     function Form() {
       const {$, validate} = useForm({foo: ""}, {
-        foo: "presence"
+        foo: "presence",
+        bar: "presence"
       });
 
       return (
         <div>
-          <Input { ...$("foo") } className="foo" />
+          <Input { ...$("foo") } wrapperClassName="foo" />
+          <Input { ...$("bar") } wrapperClassName="bar" />
           <button onClick={ () => validate() } className="validate">Validate</button>
         </div>
       );
@@ -102,24 +104,24 @@ describe("useForm", () => {
       const wrapper = mount(<Form />);
       expect(wrapper.find(".error")).to.have.lengthOf(0);
       wrapper.find(".validate").simulate("click");
-      expect(wrapper.find(".error")).to.have.lengthOf(1);
+      expect(wrapper.find(".error")).to.have.lengthOf(2);
     });
 
     it("does not initially validate input on change", () => {
       const wrapper = mount(<Form />);
-      wrapper.find("input.foo").simulate("change", {target: {value: ""}});
-      expect(wrapper.find(".error")).to.have.lengthOf(0);
+      wrapper.find(".foo input").simulate("change", {target: {value: ""}});
+      expect(wrapper.find(".foo .error")).to.have.lengthOf(0);
     });
 
-    it("validates input on change after validations have been explicitly ran", () => {
+    it("validates input on change if there are any errors on the form", () => {
       const wrapper = mount(<Form />);
-      wrapper.find("input.foo").simulate("change", {target: {value: ""}});
+      wrapper.find(".foo input").simulate("change", {target: {value: ""}});
       wrapper.find(".validate").simulate("click");
-      expect(wrapper.find(".error")).to.have.lengthOf(1);
-      wrapper.find("input.foo").simulate("change", {target: {value: "1"}});
-      expect(wrapper.find(".error")).to.have.lengthOf(0);
-      wrapper.find("input.foo").simulate("change", {target: {value: ""}});
-      expect(wrapper.find(".error")).to.have.lengthOf(1);
+      expect(wrapper.find(".foo .error")).to.have.lengthOf(1);
+      wrapper.find(".foo input").simulate("change", {target: {value: "1"}});
+      expect(wrapper.find(".foo .error")).to.have.lengthOf(0);
+      wrapper.find(".foo input").simulate("change", {target: {value: ""}});
+      expect(wrapper.find(".foo .error")).to.have.lengthOf(1);
     });
 
     describe("validation and custom onChange handler", () => {
@@ -410,9 +412,19 @@ describe("useForm", () => {
       return <Input { ...$(`items.${index}.name`) } className={ `items-${index}` } />;
     }
 
-    it("validates inputs rendered via built helper hook", () => {
+    it("validates inputs rendered via built helper hook, merging props config into a form one", () => {
+      const config = {
+        validations: {
+          "items.*.name": {
+            numericality: {
+              lessThan: 10
+            }
+          }
+        }
+      };
+
       const wrapper = mount(
-        <FormProvider>
+        <FormProvider config={ config }>
           <OrderForm />
         </FormProvider>
       );
@@ -422,6 +434,8 @@ describe("useForm", () => {
       expect(wrapper.find(".username .error")).to.have.lengthOf(1);
       expect(wrapper.find(".items-0 .error")).to.have.lengthOf(1);
       expect(wrapper.find(".items-1 .error")).to.have.lengthOf(1);
+      wrapper.find("input.items-0").simulate("change", {target: {value: "20"}});
+      expect(wrapper.find(".items-0 .error")).to.have.lengthOf(1);
     });
   });
 });

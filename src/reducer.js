@@ -1,8 +1,10 @@
 import { validateAttr, validateRule, wildcard } from "./validations";
+import { resolveConfig } from "./config";
 import update from "update-js";
 
 export default function reducer(state, action) {
-  const {attrs, errors, shouldValidateOnChange, validations, validationOptions, validationDeps} = state;
+  const {attrs, errors, validations, validationOptions, validationDeps} = state;
+  const shouldValidateOnChange = Object.values(errors).filter(Boolean).length;
 
   switch (action.type) {
     case "setConfig": {
@@ -101,8 +103,7 @@ export default function reducer(state, action) {
 
       return {
         ...state,
-        errors: nextErrors,
-        shouldValidateOnChange: true
+        errors: nextErrors
       };
     }
     case "validatePath": {
@@ -127,6 +128,8 @@ export default function reducer(state, action) {
     case "setError": {
       const {name, error} = action;
 
+      if (!error && !errors[name]) return state;
+
       return {...state, errors: {...state.errors, [name]: error}};
     }
     case "setErrors": {
@@ -148,7 +151,6 @@ export function init(attrs, config) {
     initialAttrs: attrs,
     attrs,
     errors: {},
-    shouldValidateOnChange: false,
     ...resolveConfig(config)
   };
 }
@@ -191,62 +193,4 @@ export function setErrors(errors) {
 
 export function reset(attrs) {
   return {type: "reset", attrs};
-}
-
-const CONFIG_PROPS = ["deps", "pureHandlers", "validations"];
-
-function isConfig(obj) {
-  for (const key in obj) {
-    if (CONFIG_PROPS.includes(key)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-function resolveConfig(config) {
-  if (!config) return {};
-
-  if (!isConfig(config)) {
-    config = {validations: config};
-  }
-
-  const validationOptions = {};
-  let validationsConfig = config.validations || {};
-
-  if ("defaultOptions" in validationsConfig) {
-    Object.assign(validationOptions, validationsConfig.defaultOptions);
-    validationsConfig = validationsConfig.rules;
-  }
-
-  const [validationDeps, validations] = extractValidationDeps(validationsConfig);
-
-  return {
-    pureHandlers: config.pureHandlers !== false && typeof WeakMap !== "undefined",
-    validationOptions,
-    validations,
-    validationDeps
-  };
-}
-
-function extractValidationDeps(validationsConfig) {
-  const validations = {...validationsConfig};
-  const inputDeps = {};
-
-  for (const key in validations) {
-    if (typeof validations[key] === "object" &&
-        "rules" in validations[key] && "deps" in validations[key]
-    ) {
-      validations[key].deps.forEach((dep) => {
-        if (!(dep in inputDeps)) {
-          inputDeps[dep] = [];
-        }
-        inputDeps[dep].push(key);
-      });
-      validations[key] = validations[key].rules;
-    }
-  }
-
-  return [inputDeps, validations];
 }

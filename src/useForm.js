@@ -17,6 +17,7 @@ import HandlersCache from "./HandlersCache";
 export function useForm(initialAttrs, config = {}) {
   const initial = useMemo(() => init(initialAttrs, config), []);
   const [{attrs, errors, pureHandlers}, dispatch] = useReducer(reducer, initial);
+  const isValid = Object.values(errors).filter(Boolean).length === 0;
 
   useEffect(() => {
     if (config.deps) {
@@ -53,6 +54,8 @@ export function useForm(initialAttrs, config = {}) {
     throw errors;
   }, []);
 
+  const dropError = useCallback(name => dispatch(doSetError(name, undefined)), []);
+
   const reset = useCallback((attrs) => dispatch(doReset(attrs)), []);
 
   const withValidation = (callback) => () => validate().then(callback);
@@ -74,9 +77,12 @@ export function useForm(initialAttrs, config = {}) {
     attrs,
     get,
     set,
+    errors,
     getError,
     setError,
     setErrors,
+    dropError,
+    isValid,
     reset,
     usePartial,
     validate,

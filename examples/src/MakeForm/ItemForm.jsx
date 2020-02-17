@@ -8,7 +8,7 @@ ItemForm.propTypes = {
 };
 
 export default function ItemForm({index}) {
-  const {$, set, attrs: {items}} = useOrderForm();
+  const {$, set, dropError, attrs: {items}} = useOrderForm();
 
   const changeItemId = useCallback((key, value) => {
     const index = +key.split(".")[1];
@@ -24,6 +24,8 @@ export default function ItemForm({index}) {
 
     nextItems.splice(index, 1);
     set("items", nextItems);
+    dropError(`items.${index}.id`);
+    dropError(`items.${index}.count`);
   }, [items, index]);
 
   return (

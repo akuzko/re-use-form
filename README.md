@@ -285,7 +285,7 @@ function ItemForm() {
         "numericality",
         function(value, {attrs}) {
           if (value <= attrs.min) {
-            return "Should be greated than 'min'";
+            return "Should be greater than 'min'";
           }
         }
       ],
@@ -468,8 +468,15 @@ function ItemForm({index}) {
 }
 
 function OrderEditor() {
+  const {t} = useTranslation("common");
+  const config = useMemo(() => ({
+    validations: {
+      defaultOptions: {t}
+    }
+  }), []);
+
   return (
-    <FormProvider>
+    <FormProvider config={ config }>
       <OrderForm />
     </FormProvider>
   );
@@ -478,6 +485,14 @@ function OrderEditor() {
 
 `makeForm` function accepts configuration object as it's single argument. Initial
 form attributes should be specified under `initial` property of this config object.
+As can be seen from the example above, generated `FormProvider` component also
+accepts an options `config` object that can be used to append configuration options
+that cannot be declared during `makeForm` function call (such as values returned
+by other hooks). It is OK to use any configuration object, including additional
+validations, alongside with new validation dependencies - everything will be
+merged into original config. The only dependency of resulting config object is
+the `config` from props, so make sure to memoize it to prevent unnecessary
+resolving on each render.
 
 ### Internationalized Validation Error Messages
 
@@ -563,6 +578,10 @@ export function Form() {
 - `getError(name)` - returns validation error for an input with a given name.
 - `setErrors(errors)` - sets `errors` (object) as form's errors.
 - `setError(name, error)` - sets an error for a single input with a given name.
+- `dropError(name)` - drops error for a single input with a given name.
+  Essentially calls `setError(name, undefined)`.
+- `isValid` - boolean flag indicating whether or not there are any errors
+  currently set.
 - `validate()` - performs form validations. Return a promise-like object that
   responds to `then` and `catch` methods. On successful validation, resolves
   promise with form attributes. On failed validation, rejects promise with

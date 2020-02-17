@@ -5,7 +5,7 @@ import ItemForm from "./ItemForm";
 import FormControls from "./FormControls";
 
 export default function OrderForm() {
-  const {$, get, set, getError, attrs: {items}} = useOrderForm();
+  const {$, attrs, set, errors, getError, attrs: {items}} = useOrderForm();
 
   const addItem = useCallback(() => {
     set("items", [...items, {}]);
@@ -30,7 +30,8 @@ export default function OrderForm() {
 
       <FormControls />
 
-      <div>{ JSON.stringify(get()) }</div>
+      <div>{ JSON.stringify(attrs) }</div>
+      <div>{ JSON.stringify(errors) }</div>
     </Fragment>
   );
 }
