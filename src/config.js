@@ -61,6 +61,19 @@ function extractValidationDeps(validationsConfig) {
   return [inputDeps, validations];
 }
 
+export function mergeValidations(validations1, validations2) {
+  return mergeObj(
+    validations1,
+    validations2,
+    (val1, val2) => {
+      if (!Array.isArray(val1)) val1 = [val1];
+      if (!Array.isArray(val2)) val2 = [val2];
+
+      return [...val1, ...val2];
+    }
+  );
+}
+
 export function mergeConfig(config1, config2) {
   if (!config1) return config2;
   if (!config2) return config1;
@@ -75,16 +88,7 @@ export function mergeConfig(config1, config2) {
       resConfig2.validationOptions,
       (_opt1, opt2) => opt2
     ),
-    validations: mergeObj(
-      resConfig1.validations,
-      resConfig2.validations,
-      (val1, val2) => {
-        if (!Array.isArray(val1)) val1 = [val1];
-        if (!Array.isArray(val2)) val2 = [val2];
-
-        return [...val1, ...val2];
-      }
-    ),
+    validations: mergeValidations(resConfig1.validations, resConfig2.validations),
     validationDeps: mergeObj(
       resConfig1.validationDeps,
       resConfig2.validationDeps,

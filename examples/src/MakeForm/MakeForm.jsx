@@ -3,7 +3,7 @@ import { FormProvider } from "./orderForm";
 import OrderForm from "./OrderForm";
 
 export default function MakeForm() {
-  const t = value => value.toUpperCase();
+  const t = value => value.match(/\.([^.]+)$/)[1].replace(/_/g, " ").toUpperCase();
 
   const config = useMemo(() => ({
     validations: {

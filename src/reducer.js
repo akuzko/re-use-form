@@ -1,10 +1,10 @@
 import { validateAttr, validateRule, wildcard } from "./validations";
-import { resolveConfig } from "./config";
+import { resolveConfig, mergeValidations } from "./config";
 import update from "update-js";
 
 export default function reducer(state, action) {
   const {attrs, errors, validations, validationOptions, validationDeps} = state;
-  const shouldValidateOnChange = Object.values(errors).filter(Boolean).length;
+  const shouldValidateOnChange = Object.values(errors).some(Boolean);
 
   switch (action.type) {
     case "setConfig": {
@@ -26,6 +26,35 @@ export default function reducer(state, action) {
 
       for (const key in partialValidations) {
         delete nextValidations[`${prefix}.${key}`];
+      }
+
+      return {...state, validations: nextValidations};
+    }
+    case "injectValidations": {
+      const {validations: toInjectValidations} = action;
+
+      if (!toInjectValidations) return state;
+
+      return {...state, validations: mergeValidations(validations, toInjectValidations)};
+    }
+    case "ejectValidations": {
+      const {validations: toEjectValidations} = action;
+
+      if (!toEjectValidations) return state;
+
+      const nextValidations = {...validations};
+
+      for (const key in toEjectValidations) {
+        const toEject = toEjectValidations[key];
+
+        (Array.isArray(toEject) ? toEject : [toEject]).forEach((validator) => {
+          if (nextValidations[key] === validator) {
+            delete nextValidations[key];
+          } else if (key in nextValidations) {
+            const index = nextValidations[key].indexOf(validator);
+            nextValidations[key].splice(index, 1);
+          }
+        });
       }
 
       return {...state, validations: nextValidations};
@@ -165,6 +194,14 @@ export function addPartialValidations(prefix, validations) {
 
 export function removePartialValidations(prefix, validations) {
   return {type: "removePartialValidations", prefix, validations};
+}
+
+export function injectValidations(validations) {
+  return {type: "injectValidations", validations};
+}
+
+export function ejectValidations(validations) {
+  return {type: "ejectValidations", validations};
 }
 
 export function setAttr(path, value) {

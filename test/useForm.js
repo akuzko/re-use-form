@@ -4,7 +4,7 @@ import { mount } from "enzyme";
 import sinon from "sinon";
 import { useForm, defValidation, makeForm } from "../src";
 
-import Input from "./components/Input";
+import { Input, Checkbox } from "./components";
 
 describe("useForm", () => {
   before(() => {
@@ -382,6 +382,8 @@ describe("useForm", () => {
     const [FormProvider, useOrderForm] = makeForm({
       initial: {
         username: "",
+        address: "",
+        guest: false,
         items: [{}, {}]
       },
       validations: {
@@ -391,12 +393,20 @@ describe("useForm", () => {
     });
 
     function OrderForm() {
-      const {$, get, validate} = useOrderForm();
+      const {$, validate, useMoreValidations, attrs: {guest, items}} = useOrderForm();
+
+      useMoreValidations(() => {
+        if (!guest) {
+          return {address: "presence"};
+        }
+      }, [guest]);
 
       return (
         <div>
           <Input { ...$("username") } className="username" />
-          { get("items").map((item, i) => (
+          <Input { ...$("address") } className="address" />
+          <Checkbox { ...$("guest") } className="guest" />
+          { items.map((item, i) => (
               <ItemForm key={ i } index={ i } />
             ))
           }
@@ -436,6 +446,22 @@ describe("useForm", () => {
       expect(wrapper.find(".items-1 .error")).to.have.lengthOf(1);
       wrapper.find("input.items-0").simulate("change", {target: {value: "20"}});
       expect(wrapper.find(".items-0 .error")).to.have.lengthOf(1);
+    });
+
+    it("validates inputs declared with useMoreValidations hook, and revalidates them on dependencies change", () => {
+      const wrapper = mount(
+        <FormProvider>
+          <OrderForm />
+        </FormProvider>
+      );
+
+      expect(wrapper.find(".error")).to.have.lengthOf(0);
+      wrapper.find(".validate").simulate("click");
+      expect(wrapper.find(".address .error")).to.have.lengthOf(1);
+      wrapper.find("input.guest").simulate("change", {target: {checked: true}});
+      expect(wrapper.find(".address .error")).to.have.lengthOf(0);
+      wrapper.find("input.guest").simulate("change", {target: {checked: false}});
+      expect(wrapper.find(".address .error")).to.have.lengthOf(1);
     });
   });
 });

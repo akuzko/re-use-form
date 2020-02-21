@@ -5,6 +5,8 @@ import reducer, {
   setConfig,
   setAttr,
   setAttrs,
+  injectValidations,
+  ejectValidations,
   validate as doValidate,
   setError as doSetError,
   setErrors as doSetErrors,
@@ -17,7 +19,7 @@ import HandlersCache from "./HandlersCache";
 export function useForm(initialAttrs, config = {}) {
   const initial = useMemo(() => init(initialAttrs, config), []);
   const [{attrs, errors, pureHandlers}, dispatch] = useReducer(reducer, initial);
-  const isValid = Object.values(errors).filter(Boolean).length === 0;
+  const isValid = !Object.values(errors).some(Boolean);
 
   useEffect(() => {
     if (config.deps) {
@@ -38,6 +40,8 @@ export function useForm(initialAttrs, config = {}) {
   }, []);
 
   const validate = useCallback((path) => {
+    if (typeof path !== "string") path = null;
+
     return new ValidationPromise((resolve, reject) => {
       dispatch(doValidate(path, resolve, reject));
     });
@@ -73,6 +77,24 @@ export function useForm(initialAttrs, config = {}) {
 
   const usePartial = buildPartialHook({dispatch, get, set, getError, input});
 
+  const useMoreValidations = (fn, deps) => {
+    useEffect(() => {
+      const validations = fn();
+      const revalidate = () => {
+        for (const name in validations) {
+          validate(name);
+        }
+      };
+      dispatch(injectValidations(validations));
+      if (!isValid) revalidate();
+
+      return () => {
+        dispatch(ejectValidations(validations));
+        if (!isValid) revalidate();
+      };
+    }, [...deps, isValid]);
+  };
+
   return {
     attrs,
     get,
@@ -87,6 +109,7 @@ export function useForm(initialAttrs, config = {}) {
     usePartial,
     validate,
     withValidation,
+    useMoreValidations,
     input,
     $: input
   };

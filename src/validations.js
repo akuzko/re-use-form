@@ -62,7 +62,10 @@ function callStringValidator(name, value, options) {
 
 function callObjectValidator(obj, value, options) {
   for (const name in obj) {
-    const error = callStringValidator(name, value, {...options, ...obj[name]});
+    if (!obj[name]) continue;
+
+    const validatorOpts = typeof obj[name] === "object" ? obj[name] : {};
+    const error = callStringValidator(name, value, {...options, ...validatorOpts});
 
     if (error) return error;
   }

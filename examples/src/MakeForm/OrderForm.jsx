@@ -1,11 +1,20 @@
 import React, { Fragment, useCallback } from "react";
-import { Input } from "../inputs";
+import { Input, Checkbox } from "../inputs";
 import { useOrderForm } from "./orderForm";
 import ItemForm from "./ItemForm";
 import FormControls from "./FormControls";
 
 export default function OrderForm() {
-  const {$, attrs, set, errors, getError, attrs: {items}} = useOrderForm();
+  const {$, attrs, set, errors, getError, useMoreValidations, attrs: {guest, items}} = useOrderForm();
+
+  useMoreValidations(() => {
+    if (!guest) {
+      return {
+        username: "presence",
+        address: "presence"
+      };
+    }
+  }, [guest]);
 
   const addItem = useCallback(() => {
     set("items", [...items, {}]);
@@ -13,8 +22,14 @@ export default function OrderForm() {
 
   return (
     <Fragment>
+      <div className="guest">
+        <Checkbox { ...$("guest") } label="Guest" />
+      </div>
       <div className="username">
         <Input { ...$("username") } placeholder="Username" />
+      </div>
+      <div className="address">
+        <Input { ...$("address") } placeholder="Address" />
       </div>
 
       { getError("items") &&

@@ -494,6 +494,42 @@ merged into original config. The only dependency of resulting config object is
 the `config` from props, so make sure to memoize it to prevent unnecessary
 resolving on each render.
 
+### More Optional Validation (Experimental)
+
+In some cases it is useful to be able to define blocks of optional validations
+that depend on various values, such as form attributes. For that purpose one
+can use `useMoreValidations` hook. It has the same signature as `useMemo` hook,
+and if it's function return value is an object - it will be merged to validations
+that form already has at the moment:
+
+```js
+const initialAttrs = {
+  username: "",
+  address: "",
+  guest: true
+};
+
+function UserForm() {
+  const {$, useMoreValidations, attrs: {guest}} = useForm(initial, {
+    username: "presence"
+  });
+
+  useMoreValidations(() => {
+    if (!guest) {
+      return {address: "presence"};
+    }
+  }, [guest]);
+
+  return (
+    <div>
+      <Checkbox { ...$("guest") } />
+      <TextField { ...$("username") } />
+      <TextField { ...$("address") } />
+    </div>
+  );
+}
+```
+
 ### Internationalized Validation Error Messages
 
 Depending on adopted i18n solution in your application, there are different ways of
@@ -596,6 +632,8 @@ export function Form() {
 - `reset([attrs])` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
 - `usePartial` - helper hook used to define form partials.
+- `useMoreValidations` (experimental) - helper hook used to declare optional
+  validations that depend on other values.
 
 ### More Convenient Usage
 
