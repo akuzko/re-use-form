@@ -60,22 +60,22 @@ export default function MonoForm() {
 
   const items = get("items");
 
-  const changeUsername = useCallback((key, value) => {
-    set(key, value.toUpperCase());
+  const changeUsername = useCallback((value) => {
+    set("username", value.toUpperCase());
   }, []);
 
-  const changeItemId = useCallback((key, value) => {
-    const index = +key.split(".")[1];
+  const changeItemId = useCallback((value, {name}) => {
+    const index = +name.split(".")[1];
 
     set({
-      [key]: value,
+      [name]: value,
       [`items.${index}.count`]: ""
     });
   }, []);
 
-  const changeItemCount = useCallback((key, value) => {
+  const changeItemCount = useCallback((value, {name}) => {
     if (isFinite(+value)) {
-      set(key, value);
+      set(name, value);
     }
   }, []);
 

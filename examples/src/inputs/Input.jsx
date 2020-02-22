@@ -9,7 +9,7 @@ Input.propTypes = {
 
 export default function Input({value, onChange, error, ...rest}) {
   const handleChange = (e) => {
-    onChange(e.target.value);
+    onChange(e.target.value, {event: e});
   };
 
   return (

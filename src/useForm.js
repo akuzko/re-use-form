@@ -29,7 +29,7 @@ export function useForm(initialAttrs, config = {}) {
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
 
-  const get = useCallback(path => path ? getValue(attrs, path) : attrs, [attrs]);
+  const get = useCallback(name => name ? getValue(attrs, name) : attrs, [attrs]);
 
   const set = useCallback((pathOrAttrs, value) => {
     if (typeof pathOrAttrs === "object") {
@@ -39,15 +39,15 @@ export function useForm(initialAttrs, config = {}) {
     }
   }, []);
 
-  const validate = useCallback((path) => {
-    if (typeof path !== "string") path = null;
+  const validate = useCallback((name) => {
+    if (typeof name !== "string") name = null;
 
     return new ValidationPromise((resolve, reject) => {
-      dispatch(doValidate(path, resolve, reject));
+      dispatch(doValidate(name, resolve, reject));
     });
   }, []);
 
-  const getError = useCallback((path) => errors[path], [errors]);
+  const getError = useCallback((name) => errors[name], [errors]);
 
   const setError = useCallback((name, error) => dispatch(doSetError(name, error)), []);
 
@@ -64,14 +64,14 @@ export function useForm(initialAttrs, config = {}) {
 
   const withValidation = (callback) => () => validate().then(callback);
 
-  const defaultOnChange = useCallback((path, value) => set(path, value), []);
+  const defaultOnChange = useCallback((value, {name}) => set(name, value), []);
 
-  const input = (path, onChange = defaultOnChange) => {
+  const input = (name, onChange = defaultOnChange) => {
     return {
-      value: get(path),
-      onChange: handlersCache.fetch(path, onChange, () => (value, ...args) => onChange(path, value, ...args)),
-      error: errors[path],
-      name: path
+      value: get(name),
+      onChange: handlersCache.fetch(name, onChange, () => (value, meta) => onChange(value, {...meta, name})),
+      error: errors[name],
+      name
     };
   };
 

@@ -10,7 +10,7 @@ Checkbox.propTypes = {
 
 export default function Checkbox({value, onChange, error, label, ...rest}) {
   const handleChange = (e) => {
-    onChange(e.target.checked);
+    onChange(e.target.checked, {event: e});
   };
 
   return (

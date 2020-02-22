@@ -51,7 +51,7 @@ describe("useForm", () => {
 
       return (
         <div>
-          <Input { ...$("foo", (k, value) => set(k, value.toUpperCase())) } className="foo" />
+          <Input { ...$("foo", value => set("foo", value.toUpperCase())) } className="foo" />
         </div>
       );
     }
@@ -66,7 +66,7 @@ describe("useForm", () => {
       function Form() {
         const {$, set} = useForm({foo: ", bar: "});
 
-        const changeFoo = (k, value) => set({foo: value, bar: value + "bar"});
+        const changeFoo = value => set({foo: value, bar: value + "bar"});
 
         return (
           <div>
@@ -132,8 +132,8 @@ describe("useForm", () => {
 
         return (
           <div>
-            <Input { ...$("foo", (k, value) => set(k, value.toUpperCase())) } className="foo" />
-            <button onClick={ () => validate() } className="validate">Validate</button>
+            <Input { ...$("foo", value => set("foo", value.toUpperCase())) } className="foo" />
+            <button onClick={ validate } className="validate">Validate</button>
           </div>
         );
       }
@@ -213,7 +213,7 @@ describe("useForm", () => {
           bar: "presence"
         });
 
-        const changeFoo = (k, value) => set({foo: value, bar: value + "bar"});
+        const changeFoo = value => set({foo: value, bar: value + "bar"});
 
         return (
           <div>
@@ -270,7 +270,7 @@ describe("useForm", () => {
               <div className="foos-error">{ getError("foos") }</div>
             }
             <button onClick={ setState } className="setState">Set State</button>
-            <button onClick={ () => validate() } className="validate">Validate</button>
+            <button onClick={ validate } className="validate">Validate</button>
           </div>
         );
       }

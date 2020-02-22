@@ -119,14 +119,33 @@ const {$} = useForm({}, {
 The most common use-case when you need custom logic is to have custom onChange
 handler for handling any input's change. For this, `$`/`input` function takes
 this function as second attribute. This function will be called with input
-name as first argument and input value as second one:
+value as first argument and an object with meta information as second one.
+As a bare minimum, this object will have `name` property that corresponds
+to input's name (the string value passed to `$`/`input` function call), and
+other properties can be populated by your input components:
 
 ```js
+function TextField({value, error, onChange, ...rest}) {
+  const handleChange = useCallback((e) => {
+    onChange(e.target.value, {event: e});
+  }, []);
+
+  return (
+    <div>
+      <input value={ value } onChange={ handleChange } { ...rest } />
+      { error &&
+        <div className="error">{ error }</div>
+      }
+    </div>
+  );
+}
+
 function Form() {
   const {$, set} = useForm({});
 
-  // uppercases user's input
-  const changeInput = useCallback((name, value) => {
+  // uppercases user's input and logs event provided by TextField input component
+  const changeInput = useCallback((value, {name, event}) => {
+    console.log(event);
     set(name, value.toUpperCase());
   }, []);
 
