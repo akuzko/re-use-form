@@ -6,7 +6,7 @@ import { useForm } from "../../../src";
 
 const initialForm = {
   username: "",
-  items: [{}, {}, {}]
+  items: [{}, {}]
 };
 
 export default function ComplexForm() {

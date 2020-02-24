@@ -9,10 +9,12 @@ export default function buildPartialHook({
     getError: formGetError,
     input: formInput
   }) {
-  return function usePartial(prefix, validations = {}) {
+  return function usePartial({prefix, ...config}) {
     useEffect(() => {
+      const validations = config.validations || {};
+
       if (Object.getOwnPropertyNames(validations).length > 0) {
-        const config = {validations: {}};
+        config.validations = {};
 
         for (const key in validations) {
           config.validations[`${prefix}.${key}`] = validations[key];

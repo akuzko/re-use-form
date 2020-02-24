@@ -384,8 +384,11 @@ describe("useForm", () => {
 
     // eslint-disable-next-line react/prop-types
     function ItemForm({usePartial, index}) {
-      const {$} = usePartial(`items.${index}`, {
-        name: "presence"
+      const {$} = usePartial({
+        prefix: `items.${index}`,
+        validations: {
+          name: "presence"
+        }
       });
 
       return <Input { ...$("name") } className={ `items-${index}` } />;

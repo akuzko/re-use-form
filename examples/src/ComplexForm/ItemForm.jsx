@@ -9,9 +9,22 @@ ItemForm.propTypes = {
 };
 
 export default function ItemForm({index, usePartial, onRemove}) {
-  const {$} = usePartial(`items.${index}`, {
-    id: "presence",
-    count: "presence"
+  const {$} = usePartial({
+    prefix: `items.${index}`,
+    validations: {
+      id: "presence",
+      count: {
+        rules: [
+          "presence",
+          function(value, {attrs}) {
+            if (attrs.username != "richguy" && +value > 10) {
+              return "You can't afford this much!";
+            }
+          }
+        ],
+        deps: ["username"]
+      }
+    }
   });
 
   return (

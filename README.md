@@ -444,9 +444,19 @@ function OrderForm() {
 }
 
 function ItemForm({usePartial, index}) {
-  const {$} = usePartial(`items.${index}`, {
-    name: "presence",
-    count: "presence"
+  const {$} = usePartial({
+    prefix: `items.${index}`,
+    validations: {
+      name: "presence",
+      count: {
+        rules: ["presence", function(value, {attrs}) {
+          if (attrs.username === "guest" && +value > 10) {
+            return "Guests are not allowed that many";
+          }
+        }],
+        deps: ["username"]
+      }
+    }
   });
 
   return (
@@ -458,10 +468,13 @@ function ItemForm({usePartial, index}) {
 }
 ```
 
-There are couple of limitations in `usePartial` hook, however:
-- As second parameter it can accept only validation rules object (i.e. it is
-not configurable in any other way)
-- Dynamic config and validation is not supported when using form partials.
+As can be seen in example above, `usePartial`'s configuration object should
+specify attributes prefix, instead of form initial attributes. Also note that
+when specifying validation dependencies, full name of dependency should be
+specified, since partial's validation might depend on "root" form attributes.
+
+Also note that "Dedicated Form Hook" feature bellow, which appeared later than
+form partials, might provide even more convenient form usage and code organization.
 
 ### Dedicated Form Hook
 
