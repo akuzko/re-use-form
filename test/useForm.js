@@ -25,7 +25,7 @@ describe("useForm", () => {
   });
 
   function Form() {
-    const {$} = useForm({foo: "foo"});
+    const {$} = useForm({initial: {foo: "foo"}});
 
     return (
       <div>
@@ -47,7 +47,7 @@ describe("useForm", () => {
 
   describe("custom onChange handlers", () => {
     function Form() {
-      const {$, set} = useForm({foo: ""});
+      const {$, set} = useForm({initial: {foo: "foo"}});
 
       return (
         <div>
@@ -64,7 +64,7 @@ describe("useForm", () => {
 
     describe("setting multiple values at once", () => {
       function Form() {
-        const {$, set} = useForm({foo: ", bar: "});
+        const {$, set} = useForm({initial: {foo: ", bar: "}});
 
         const changeFoo = value => set({foo: value, bar: value + "bar"});
 
@@ -86,9 +86,12 @@ describe("useForm", () => {
 
   describe("validations", () => {
     function Form() {
-      const {$, validate} = useForm({foo: ""}, {
-        foo: "presence",
-        bar: "presence"
+      const {$, validate} = useForm({
+        initial: {foo: ""},
+        validations: {
+          foo: "presence",
+          bar: "presence"
+        }
       });
 
       return (
@@ -126,8 +129,11 @@ describe("useForm", () => {
 
     describe("validation and custom onChange handler", () => {
       function Form() {
-        const {$, set, validate} = useForm({foo: ""}, {
-          foo: "presence"
+        const {$, set, validate} = useForm({
+          initial: {foo: ""},
+          validations: {
+            foo: "presence"
+          }
         });
 
         return (
@@ -150,8 +156,11 @@ describe("useForm", () => {
 
     describe("validating single input value stand-alone", () => {
       function Form() {
-        const {$, validate} = useForm({foo: ""}, {
-          foo: "presence"
+        const {$, validate} = useForm({
+          initial: {foo: ""},
+          validations: {
+            foo: "presence"
+          }
         });
 
         const validateFoo = () => validate("foo");
@@ -174,15 +183,18 @@ describe("useForm", () => {
 
     describe("complex forms of value validation", () => {
       function Form() {
-        const {$, validate} = useForm({foo: ""}, {
-          foo: [
-            "presence",
-            {numericality: {lessThan: 10}},
-            function(value) {
-              if (+value === 5) {
-                return "Not five";
-              }
-            }]
+        const {$, validate} = useForm({
+          initial: {foo: ""},
+          validations: {
+            foo: [
+              "presence",
+              {numericality: {lessThan: 10}},
+              function(value) {
+                if (+value === 5) {
+                  return "Not five";
+                }
+              }]
+          }
         });
 
         return (
@@ -208,9 +220,12 @@ describe("useForm", () => {
 
     describe("validating multiple values on setting them at once", () => {
       function Form() {
-        const {$, set, validate} = useForm({foo: "", bar: ""}, {
-          foo: "presence",
-          bar: "presence"
+        const {$, set, validate} = useForm({
+          initial: {foo: "", bar: ""},
+          validations: {
+            foo: "presence",
+            bar: "presence"
+          }
         });
 
         const changeFoo = value => set({foo: value, bar: value + "bar"});
@@ -238,18 +253,21 @@ describe("useForm", () => {
 
     describe("complex validation with wildcards and dependencies", () => {
       function Form() {
-        const {get, set, $, getError, validate} = useForm({foos: []}, {
-          "foos": "presence",
-          "foos.*.value": {
-            rules: ["presence", (value, {name, attrs}) => {
-              const index = +name.split(".")[1];
-              const max = attrs.foos[index].max;
+        const {get, set, $, getError, validate} = useForm({
+          initial: {foos: []},
+          validations: {
+            "foos": "presence",
+            "foos.*.value": {
+              rules: ["presence", (value, {name, attrs}) => {
+                const index = +name.split(".")[1];
+                const max = attrs.foos[index].max;
 
-              if (+value > max) {
-                return `Too much (max ${max})`;
-              }
-            }],
-            deps: ["foos.*.max"]
+                if (+value > max) {
+                  return `Too much (max ${max})`;
+                }
+              }],
+              deps: ["foos.*.max"]
+            }
           }
         });
 
@@ -293,8 +311,11 @@ describe("useForm", () => {
     describe("callbacks usage", () => {
       // eslint-disable-next-line react/prop-types
       function Form({onValid, onError}) {
-        const {$, validate} = useForm({foo: ""}, {
-          foo: "presence"
+        const {$, validate} = useForm({
+          initial: {foo: ""},
+          validations: {
+            foo: "presence"
+          }
         });
 
         const save = () => {
@@ -342,8 +363,11 @@ describe("useForm", () => {
 
   describe("form partials", () => {
     function OrderForm() {
-      const {$, get, validate, usePartial} = useForm({username: "", items: [{}, {}]}, {
-        username: "presence"
+      const {$, get, validate, usePartial} = useForm({
+        initial: {username: "", items: [{}, {}]},
+        validations: {
+          username: "presence"
+        }
       });
 
       return (
@@ -393,11 +417,13 @@ describe("useForm", () => {
     });
 
     function OrderForm() {
-      const {$, validate, useMoreValidations, attrs: {guest, items}} = useOrderForm();
+      const {$, validate, useConfig, attrs: {guest, items}} = useOrderForm();
 
-      useMoreValidations(() => {
+      useConfig(() => {
         if (!guest) {
-          return {address: "presence"};
+          return {
+            validations: {address: "presence"}
+          };
         }
       }, [guest]);
 

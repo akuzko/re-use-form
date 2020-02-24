@@ -20,6 +20,7 @@ const initialForm = {
 export default function MonoForm() {
   const [saving, setSaving] = useState(false);
   const [validationEnabled, setValidationEnabled] = useState(true);
+  const [itemsValidationEnabled, setItemsValidationEnabled] = useState(true);
   const {t} = useTranslation();
   const {
     $,
@@ -29,18 +30,31 @@ export default function MonoForm() {
     setError,
     withValidation,
     reset: doReset,
-    validate: doValidate
-  } = useForm(initialForm, {
-    deps: [validationEnabled],
-    validations: validationEnabled && {
-      defaultOptions: {t},
-      rules: {
+    validate: doValidate,
+    useConfig
+  } = useForm({
+    initial: initialForm,
+    validations: {
+      defaultOptions: {t}
+    }
+  });
+
+  useConfig(() => {
+    return validationEnabled && {
+      validations: {
         "username": {
           presence: true,
           format: {
             pattern: /^[\w\s\d.,]+$/
-          },
-        },
+          }
+        }
+      }
+    };
+  }, [validationEnabled]);
+
+  useConfig(() => {
+    return validationEnabled && itemsValidationEnabled && {
+      validations: {
         "items": "presence",
         "items.*.id": "presence",
         "items.*.count": "presence",
@@ -55,8 +69,8 @@ export default function MonoForm() {
           deps: ["items.*.count"]
         }
       }
-    }
-  });
+    };
+  }, [validationEnabled, itemsValidationEnabled]);
 
   const items = get("items");
 
@@ -117,7 +131,10 @@ export default function MonoForm() {
   return (
     <>
       <div>
-        <Checkbox value={ validationEnabled } onChange={ setValidationEnabled } label="Client Validation" />
+        <Checkbox value={ validationEnabled } onChange={ setValidationEnabled } label="Username Validation" />
+      </div>
+      <div>
+        <Checkbox value={ itemsValidationEnabled } onChange={ setItemsValidationEnabled } label="Items Validation" />
       </div>
 
       <div className="username">

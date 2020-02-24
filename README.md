@@ -1,8 +1,8 @@
 React Form Hook
 ===============
 
-Simple and robust form hook for [React](https://facebook.github.io/react/) with validation
-support and simple internationalization.
+Simple and robust form hook for [React](https://facebook.github.io/react/) with
+validation support and simple internationalization.
 
 [![build status](https://img.shields.io/travis/akuzko/re-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/re-use-form)
 [![npm version](https://img.shields.io/npm/v/re-use-form.svg?style=flat-square)](https://www.npmjs.com/package/re-use-form)
@@ -21,23 +21,25 @@ npm install --save re-use-form
 with custom **Input** components. An **Input** is any component that consumes
 three properties: `value`, `error` and `onChange` (note that there is also `name`
 property supplied for input by form's helpers). It also has to provide it's
-`value` as first argument to `onChange` function supplied in props.
+`value` as first argument to `onChange` function supplied in props (see
+"Custom `onChange` Input Handler" section bellow for more info and examples).
 
 ### `useForm` Hook
 
-`useForm` hook is primary hook provided by the package. It accepts
-object with initial form attributes and optional config. Config can be used to
-define client-side validations (see *"Form Validations"* section bellow) and to
-ease internationalization.
+`useForm` hook is primary hook provided by the package. It accepts an optional
+configuration object that can be used to specify form's initial attributes,
+client-side validations (see *"Form Validations"* section bellow) and to
+ease internationalization of error messages by providing default validation
+options.
 
 ```js
 import { useForm } from 're-use-form';
 import { TextField, Select } from 'my-components/inputs';
 
 function MyForm({onSave}) {
-  const {input, get} = useForm({}); // initialize form attributes with empty object.
+  const {input, attrs} = useForm(); // initializes form attributes with empty object.
 
-  const save = () => onSave(get()); // get() returns all current form state
+  const save = () => onSave(attrs);
 
   return (
     <>
@@ -56,7 +58,7 @@ function MyForm({onSave}) {
 
 #### Note on `$` alias for `input` helper.
 
-`useForm` hook returns an object that has both `input` and `$` keys with the same
+`useForm` hook returns an object that has both `input` and `$` properties with the same
 value. While `input` is more explicit name, it might become cumbersome to use it
 over and over again. For this reason, `useForm` hook also provides a `$` helper
 that does the same. Basically, it's the same approach as used in
@@ -67,44 +69,38 @@ Keep in mind that although `$` is available by default, you can use any alias
 you find convenient when destructuring form helpers object returned by hook:
 
 ```js
-const {input: inp} = useForm({});
+const {input: inp} = useForm();
 
 // and then you can use `<Input { ...inp("name") } />`
 ```
 
 ### Hook Config
 
-`useForm` hook accepts a config as a second argument. This `config` object is
-mainly used for declaring form validations and **is memoized with no dependencies by default**.
-Also, config itself may be replaced by validation rules (see *"Form Validations"*
-section bellow), removing need of extra nesting.
+`useForm` hook accepts a config as it's only argument. This `config` object is
+used to specify form's initial values, client-side validations (see
+*"Form Validations"* section bellow), their dependencies, etc.
+This config object **is memoized with no dependencies by default**. For dynamic
+configuration one should use `useConfig` hook (see bellow).
 
-Bellow are examples of `useForm` hook call with valid configs:
+Bellow are examples of `useForm` hook call with different config examples:
 ```js
-// Using input validation setup directly in place of config:
-const {$} = useForm({}, {
-  username: "presence"
-});
-```
-
-To be able to have dynamic config, you should specify list of cofig dependencies
-under `deps` config property:
-```js
-const [validationEnabled, setValidationEnabled] = useState(false);
-const {$} = useForm({}, {
-  deps: [validationEnabled],
-  validations: validationEnabled && {
+const {$} = useForm({
+  initial: {
+    username: "",
+    items: [{}]
+  },
+  validations: {
     username: "presence"
   }
 });
 ```
 
-Finally, in cases when validation setup needs to share common options for all
+In cases when validation setup needs to share common options for all
 validation rules (like for internationalizing error messages, see corresponding
 section bellow), you can specify `defaultOptions` within validation setup:
 ```js
 const {t} = useTranslation("common");
-const {$} = useForm({}, {
+const {$} = useForm({
   validations: {
     defaultOptions: {t},
     rules: {
@@ -113,6 +109,25 @@ const {$} = useForm({}, {
   }
 });
 ```
+
+To apply a dynamic configuration, for instance, input value-dependent validation,
+one can use `useConfig` helper hook. It has the same signature as `useMemo`
+hook, and should it's function provide a config object, it will be merged with
+the configuration form already has:
+```js
+const {$, useConfig, attrs: {guest}} = useForm({
+  initial: {username: "", address: "", guest: false}
+});
+
+useConfig(() => {
+  return !guest && {
+    validations: {
+      username: "presence",
+      address: "presence"
+    }
+  };
+}, [guest]);
+````
 
 ### Custom `onChange` Input Handler
 
@@ -141,7 +156,7 @@ function TextField({value, error, onChange, ...rest}) {
 }
 
 function Form() {
-  const {$, set} = useForm({});
+  const {$, set} = useForm();
 
   // uppercases user's input and logs event provided by TextField input component
   const changeInput = useCallback((value, {name, event}) => {
@@ -231,21 +246,23 @@ custom function validations, if needed)
 import { useForm } from 're-use-form';
 
 function UserForm() {
-  const {$, validate} = useForm({}, {
-    "email": ["presence", "email"],
-    "fullName": "presence",
-    "address.city": ["presence", function(value) {
-      if (!value) return;
+  const {$, validate} = useForm({
+    validations: {
+      "email": ["presence", "email"],
+      "fullName": "presence",
+      "address.city": ["presence", function(value) {
+        if (!value) return;
 
-      if (!/^[A-Z]/.test(value)) {
-        return "Should start with capital letter";
-      }
-    }],
-    "address.line": {
-      presence: true,
-      format: {
-        pattern: /^[\w\s\d\.,]+$/,
-        message: "Please enter a valid address"
+        if (!/^[A-Z]/.test(value)) {
+          return "Should start with capital letter";
+        }
+      }],
+      "address.line": {
+        presence: true,
+        format: {
+          pattern: /^[\w\s\d\.,]+$/,
+          message: "Please enter a valid address"
+        }
       }
     }
   });
@@ -296,21 +313,23 @@ For example:
 
 ```js
 function ItemForm() {
-  const {$} = useForm({}, {
-    min: ["presence", "numericality"],
-    max: {
-      rules: [
-        "presence",
-        "numericality",
-        function(value, {attrs}) {
-          if (value <= attrs.min) {
-            return "Should be greater than 'min'";
+  const {$} = useForm({
+    validations: {
+      min: ["presence", "numericality"],
+      max: {
+        rules: [
+          "presence",
+          "numericality",
+          function(value, {attrs}) {
+            if (value <= attrs.min) {
+              return "Should be greater than 'min'";
+            }
           }
-        }
-      ],
-      deps: ["min"]
+        ],
+        deps: ["min"]
+      }
     }
-  })
+  });
 }
 ```
 And now, if form has any errors rendered, `max` input will be validated whenever
@@ -323,12 +342,15 @@ for them using wildcards:
 
 ```js
 function OrderForm() {
-  const {$} = useForm({items: []}, {
-    "email": ["presence", "email"],
-    "items.*.name": "presence",
-    "items.*.count": {
-      presence: true,
-      numericality: {greaterThan: 10}
+  const {$} = useForm({
+    initial: {items: []},
+    validations: {
+      "email": ["presence", "email"],
+      "items.*.name": "presence",
+      "items.*.count": {
+        presence: true,
+        numericality: {greaterThan: 10}
+      }
     }
   });
 
@@ -340,21 +362,24 @@ It is also possible to specify dependencies for wildcard validation:
 
 ```js
 function OrderForm() {
-  const {$} = useForm({items: []}, {
-    "items.*.id": "presence",
-    "items.*.min": "presence",
-    "items.*.max": {
-      rules: [
-        "presence",
-        function(value, {name, attrs}) {
-          const index = +name.split(".")[1];
+  const {$} = useForm({
+    initial: {items: []},
+    validations: {
+      "items.*.id": "presence",
+      "items.*.min": "presence",
+      "items.*.max": {
+        rules: [
+          "presence",
+          function(value, {name, attrs}) {
+            const index = +name.split(".")[1];
 
-          if (value <= attrs.items[index].min) {
-            return `Should be greated than ${attrs.items[index].min}`;
+            if (value <= attrs.items[index].min) {
+              return `Should be greated than ${attrs.items[index].min}`;
+            }
           }
-        }
-      ],
-      deps: ["items.*.min"]
+        ],
+        deps: ["items.*.min"]
+      }
     }
   });
 }
@@ -371,8 +396,10 @@ a callback and wraps it in validation routines. This callback will be called
 only if form had no errors:
 
 ```js
-const {$, withValidation} = useForm({}, {
-  name: "presence"
+const {$, withValidation} = useForm({
+  validations: {
+    name: "presence"
+  }
 });
 
 const save = withValidation((attrs) => {
@@ -397,8 +424,11 @@ components for better maintainability.
 
 ```js
 function OrderForm() {
-  const {$, get, validate, usePartial} = useForm({username: "", items: [{}]}, {
-    username: "presence"
+  const {$, get, validate, usePartial} = useForm({
+    initial: {username: "", items: [{}]},
+    validations: {
+      username: "presence"
+    }
   });
 
   return (
@@ -502,8 +532,7 @@ function OrderEditor() {
 }
 ```
 
-`makeForm` function accepts configuration object as it's single argument. Initial
-form attributes should be specified under `initial` property of this config object.
+`makeForm` function accepts configuration object as it's single argument.
 As can be seen from the example above, generated `FormProvider` component also
 accepts an options `config` object that can be used to append configuration options
 that cannot be declared during `makeForm` function call (such as values returned
@@ -512,42 +541,6 @@ validations, alongside with new validation dependencies - everything will be
 merged into original config. The only dependency of resulting config object is
 the `config` from props, so make sure to memoize it to prevent unnecessary
 resolving on each render.
-
-### More Optional Validation (Experimental)
-
-In some cases it is useful to be able to define blocks of optional validations
-that depend on various values, such as form attributes. For that purpose one
-can use `useMoreValidations` hook. It has the same signature as `useMemo` hook,
-and if it's function return value is an object - it will be merged to validations
-that form already has at the moment:
-
-```js
-const initialAttrs = {
-  username: "",
-  address: "",
-  guest: true
-};
-
-function UserForm() {
-  const {$, useMoreValidations, attrs: {guest}} = useForm(initial, {
-    username: "presence"
-  });
-
-  useMoreValidations(() => {
-    if (!guest) {
-      return {address: "presence"};
-    }
-  }, [guest]);
-
-  return (
-    <div>
-      <Checkbox { ...$("guest") } />
-      <TextField { ...$("username") } />
-      <TextField { ...$("address") } />
-    </div>
-  );
-}
-```
 
 ### Internationalized Validation Error Messages
 
@@ -598,7 +591,7 @@ import { useTranslation } from "react-i18next";
 
 export function Form() {
   const {t} = useTranslation("common");
-  const {$} = useForm({}, {
+  const {$} = useForm({
     validations: {
       defaultOptions: {t},
       rules: {
@@ -616,6 +609,8 @@ export function Form() {
 
 `useForm` hook returns object with following properties:
 
+- `useConfig` - helper hook used to declare dynamic form configuration that
+  depends on dynamic values (external variables or form's input values).
 - `$(name)`, `input(name)` - returns a set of properties for input with a given
   name. `name` is a dot-separated string, i.e. `'foo.bar'` (for `bar` property
   nested in object under `foo`), or `'foos.1'` (value at index 1 of `foos` array),
@@ -651,8 +646,6 @@ export function Form() {
 - `reset([attrs])` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
 - `usePartial` - helper hook used to define form partials.
-- `useMoreValidations` (experimental) - helper hook used to declare optional
-  validations that depend on other values.
 
 ### More Convenient Usage
 

@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from "react";
-import { addPartialValidations, removePartialValidations } from "./reducer";
+import { addConfig, removeConfig } from "./reducer";
+import { resolveConfig } from "./config";
 
 export default function buildPartialHook({
     dispatch,
@@ -11,10 +12,18 @@ export default function buildPartialHook({
   return function usePartial(prefix, validations = {}) {
     useEffect(() => {
       if (Object.getOwnPropertyNames(validations).length > 0) {
-        dispatch(addPartialValidations(prefix, validations));
+        const config = {validations: {}};
+
+        for (const key in validations) {
+          config.validations[`${prefix}.${key}`] = validations[key];
+        }
+
+        const resolvedConfig = resolveConfig(config);
+
+        dispatch(addConfig(resolvedConfig));
 
         return () => {
-          dispatch(removePartialValidations(prefix, validations));
+          dispatch(removeConfig(resolvedConfig));
         };
       }
 

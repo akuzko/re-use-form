@@ -5,7 +5,7 @@ import ComplexForm from "./ComplexForm";
 import MakeForm from "./MakeForm";
 
 export default function Main() {
-  const [currentTab, setCurrentTab] = useState("mono");
+  const [currentTab, setCurrentTab] = useState("make");
 
   return (
     <div>

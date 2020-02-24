@@ -1,63 +1,63 @@
 import { validateAttr, validateRule, wildcard } from "./validations";
-import { resolveConfig, mergeValidations } from "./config";
+import { resolveConfig, mergeConfigs } from "./config";
 import update from "update-js";
 
 export default function reducer(state, action) {
-  const {attrs, errors, validations, validationOptions, validationDeps} = state;
+  const {attrs, errors, validations, validationOptions, validationDeps, configs} = state;
   const shouldValidateOnChange = Object.values(errors).some(Boolean);
 
   switch (action.type) {
-    case "setConfig": {
-      return {...state, ...resolveConfig(action.config)};
-    }
-    case "addPartialValidations": {
-      const nextValidations = {...validations};
-      const {prefix, validations: partialValidations} = action;
+    case "addConfig": {
+      if (!action.resolvedConfig) return state;
 
-      for (const key in partialValidations) {
-        nextValidations[`${prefix}.${key}`] = partialValidations[key];
-      }
+      const nextConfigs = [...configs, action.resolvedConfig];
+      const {validations, validationOptions, validationDeps} = nextConfigs.reduce(mergeConfigs);
+      let nextErrors = errors;
 
-      return {...state, validations: nextValidations};
-    }
-    case "removePartialValidations": {
-      const nextValidations = {...validations};
-      const {prefix, validations: partialValidations} = action;
+      if (shouldValidateOnChange) {
+        const fullOpts = {...validationOptions, attrs};
+        nextErrors = {};
 
-      for (const key in partialValidations) {
-        delete nextValidations[`${prefix}.${key}`];
-      }
-
-      return {...state, validations: nextValidations};
-    }
-    case "injectValidations": {
-      const {validations: toInjectValidations} = action;
-
-      if (!toInjectValidations) return state;
-
-      return {...state, validations: mergeValidations(validations, toInjectValidations)};
-    }
-    case "ejectValidations": {
-      const {validations: toEjectValidations} = action;
-
-      if (!toEjectValidations) return state;
-
-      const nextValidations = {...validations};
-
-      for (const key in toEjectValidations) {
-        const toEject = toEjectValidations[key];
-
-        (Array.isArray(toEject) ? toEject : [toEject]).forEach((validator) => {
-          if (nextValidations[key] === validator) {
-            delete nextValidations[key];
-          } else if (key in nextValidations) {
-            const index = nextValidations[key].indexOf(validator);
-            nextValidations[key].splice(index, 1);
-          }
+        Object.keys(validations).forEach((rule) => {
+          validateRule(validations, fullOpts, rule, nextErrors);
         });
       }
 
-      return {...state, validations: nextValidations};
+      return {
+        ...state,
+        configs: nextConfigs,
+        errors: nextErrors,
+        validations,
+        validationOptions,
+        validationDeps
+      };
+    }
+    case "removeConfig": {
+      if (!action.resolvedConfig) return state;
+
+      const index = configs.indexOf(action.resolvedConfig);
+      const nextConfigs = [...configs];
+      nextConfigs.splice(index, 1);
+      const {validations, validationOptions, validationDeps} = nextConfigs.reduce(mergeConfigs);
+      let nextErrors = errors;
+
+      if (shouldValidateOnChange) {
+        const fullOpts = {...validationOptions, attrs};
+        nextErrors = {};
+
+        Object.keys(validations).forEach((rule) => {
+          validateRule(validations, fullOpts, rule, nextErrors);
+        });
+      }
+
+      return {
+        ...state,
+        configs: nextConfigs,
+        errors: nextErrors,
+        validations,
+        validationOptions,
+        validationDeps
+      };
     }
     case "setAttr": {
       const {path, value} = action;
@@ -167,7 +167,8 @@ export default function reducer(state, action) {
     case "reset": {
       return {
         ...state,
-        ...init(action.attrs || state.initialAttrs)
+        errors: {},
+        attrs: action.attrs || state.initialAttrs
       };
     }
     default:
@@ -175,33 +176,25 @@ export default function reducer(state, action) {
   }
 }
 
-export function init(attrs, config) {
+export function init(config) {
+  const resolved = resolveConfig(config);
+  const {attrs, ...rest} = resolved;
+
   return {
     initialAttrs: attrs,
     attrs,
     errors: {},
-    ...resolveConfig(config)
+    configs: [resolved],
+    ...rest
   };
 }
 
-export function setConfig(config) {
-  return {type: "setConfig", config};
+export function addConfig(resolvedConfig) {
+  return {type: "addConfig", resolvedConfig};
 }
 
-export function addPartialValidations(prefix, validations) {
-  return {type: "addPartialValidations", prefix, validations};
-}
-
-export function removePartialValidations(prefix, validations) {
-  return {type: "removePartialValidations", prefix, validations};
-}
-
-export function injectValidations(validations) {
-  return {type: "injectValidations", validations};
-}
-
-export function ejectValidations(validations) {
-  return {type: "ejectValidations", validations};
+export function removeConfig(resolvedConfig) {
+  return {type: "removeConfig", resolvedConfig};
 }
 
 export function setAttr(path, value) {

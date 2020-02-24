@@ -16,7 +16,7 @@ Input.defaultProps = {
 };
 
 export default function Input({value, onChange, error, name, wrapperClassName, errorClassName, ...rest}) {
-  const handleChange = e => onChange(e.target.value, e);
+  const handleChange = e => onChange(e.target.value, {event: e});
 
   return (
     <div className={ wrapperClassName }>

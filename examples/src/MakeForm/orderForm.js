@@ -4,7 +4,7 @@ export const [FormProvider, useOrderForm] = makeForm({
   initial: {
     guest: false,
     username: "",
-    items: [{}, {}, {}]
+    items: [{}, {}]
   },
   validations: {
     "username": {

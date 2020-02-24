@@ -2,11 +2,10 @@ import { useReducer, useCallback, useEffect, useMemo } from "react";
 import getValue from "get-lookup";
 import reducer, {
   init,
-  setConfig,
   setAttr,
   setAttrs,
-  injectValidations,
-  ejectValidations,
+  addConfig,
+  removeConfig,
   validate as doValidate,
   setError as doSetError,
   setErrors as doSetErrors,
@@ -15,17 +14,12 @@ import reducer, {
 import { ValidationPromise } from "./validations";
 import buildPartialHook from "./buildPartialHook";
 import HandlersCache from "./HandlersCache";
+import { resolveConfig, DEFAULT_CONFIG } from "./config";
 
-export function useForm(initialAttrs, config = {}) {
-  const initial = useMemo(() => init(initialAttrs, config), []);
+export function useForm(config = DEFAULT_CONFIG) {
+  const initial = useMemo(() => init(config), []);
   const [{attrs, errors, pureHandlers}, dispatch] = useReducer(reducer, initial);
   const isValid = !Object.values(errors).some(Boolean);
-
-  useEffect(() => {
-    if (config.deps) {
-      dispatch(setConfig(config));
-    }
-  }, config.deps || []);
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
 
@@ -77,22 +71,15 @@ export function useForm(initialAttrs, config = {}) {
 
   const usePartial = buildPartialHook({dispatch, get, set, getError, input});
 
-  const useMoreValidations = (fn, deps) => {
+  const useConfig = (fn, deps) => {
     useEffect(() => {
-      const validations = fn();
-      const revalidate = () => {
-        for (const name in validations) {
-          validate(name);
-        }
-      };
-      dispatch(injectValidations(validations));
-      if (!isValid) revalidate();
+      const config = resolveConfig(fn());
+      dispatch(addConfig(config));
 
       return () => {
-        dispatch(ejectValidations(validations));
-        if (!isValid) revalidate();
+        dispatch(removeConfig(config));
       };
-    }, [...deps, isValid]);
+    }, deps);
   };
 
   return {
@@ -107,9 +94,9 @@ export function useForm(initialAttrs, config = {}) {
     isValid,
     reset,
     usePartial,
+    useConfig,
     validate,
     withValidation,
-    useMoreValidations,
     input,
     $: input
   };

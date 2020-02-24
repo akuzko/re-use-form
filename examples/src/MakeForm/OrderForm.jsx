@@ -5,15 +5,15 @@ import ItemForm from "./ItemForm";
 import FormControls from "./FormControls";
 
 export default function OrderForm() {
-  const {$, attrs, set, errors, getError, useMoreValidations, attrs: {guest, items}} = useOrderForm();
+  const {$, attrs, set, errors, getError, useConfig, attrs: {guest, items}} = useOrderForm();
 
-  useMoreValidations(() => {
-    if (!guest) {
-      return {
+  useConfig(() => {
+    return guest && {
+      validations: {
         username: "presence",
         address: "presence"
-      };
-    }
+      }
+    };
   }, [guest]);
 
   const addItem = useCallback(() => {

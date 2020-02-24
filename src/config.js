@@ -1,14 +1,4 @@
-const CONFIG_PROPS = ["deps", "pureHandlers", "validations"];
-
-function isConfig(obj) {
-  for (const key in obj) {
-    if (CONFIG_PROPS.includes(key)) {
-      return true;
-    }
-  }
-
-  return false;
-}
+export const DEFAULT_CONFIG = {initial: {}};
 
 function isResolved(config) {
   return "pureHandlers" in config;
@@ -17,10 +7,6 @@ function isResolved(config) {
 export function resolveConfig(config) {
   if (!config) return {};
   if (isResolved(config)) return config;
-
-  if (!isConfig(config)) {
-    config = {validations: config};
-  }
 
   const validationOptions = {};
   let validationsConfig = config.validations || {};
@@ -33,6 +19,7 @@ export function resolveConfig(config) {
   const [validationDeps, validations] = extractValidationDeps(validationsConfig);
 
   return {
+    attrs: config.initial,
     pureHandlers: config.pureHandlers !== false && typeof WeakMap !== "undefined",
     validationOptions,
     validations,
@@ -61,7 +48,7 @@ function extractValidationDeps(validationsConfig) {
   return [inputDeps, validations];
 }
 
-export function mergeValidations(validations1, validations2) {
+function mergeValidations(validations1, validations2) {
   return mergeObj(
     validations1,
     validations2,
@@ -74,7 +61,23 @@ export function mergeValidations(validations1, validations2) {
   );
 }
 
-export function mergeConfig(config1, config2) {
+function mergeValidationOptions(opts1, opts2) {
+  return mergeObj(
+    opts1,
+    opts2,
+    (_opt1, opt2) => opt2
+  );
+}
+
+function mergeValidationDeps(deps1, deps2) {
+  return mergeObj(
+    deps1,
+    deps2,
+    (deps1, deps2) => [...deps1, ...deps2]
+  );
+}
+
+export function mergeConfigs(config1, config2) {
   if (!config1) return config2;
   if (!config2) return config1;
 
@@ -83,28 +86,22 @@ export function mergeConfig(config1, config2) {
 
   return {
     pureHandlers: resConfig1.pureHandlers,
-    validationOptions: mergeObj(
-      resConfig1.validationOptions,
-      resConfig2.validationOptions,
-      (_opt1, opt2) => opt2
-    ),
+    validationOptions: mergeValidationOptions(resConfig1.validationOptions, resConfig2.validationOptions),
     validations: mergeValidations(resConfig1.validations, resConfig2.validations),
-    validationDeps: mergeObj(
-      resConfig1.validationDeps,
-      resConfig2.validationDeps,
-      (deps1, deps2) => [...deps1, ...deps2]
-    )
+    validationDeps: mergeValidationDeps(resConfig1.validationDeps, resConfig2.validationDeps)
   };
 }
 
 function mergeObj(obj1, obj2, resolver) {
+  const merged = {...obj1};
+
   for (const key in obj2) {
     if (key in obj1) {
-      obj1[key] = resolver(obj1[key], obj2[key]);
+      merged[key] = resolver(obj1[key], obj2[key]);
     } else {
-      obj1[key] = obj2[key];
+      merged[key] = obj2[key];
     }
   }
 
-  return obj1;
+  return merged;
 }

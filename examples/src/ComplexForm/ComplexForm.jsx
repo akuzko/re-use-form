@@ -10,14 +10,17 @@ const initialForm = {
 };
 
 export default function ComplexForm() {
-  const {$, get, set, getError, reset: doReset, validate, usePartial} = useForm(initialForm, {
-    username: {
-      presence: true,
-      format: {
-        pattern: /^[\w\s\d.,]+$/
+  const {$, get, set, getError, reset: doReset, validate, usePartial} = useForm({
+    initial: initialForm,
+    validations: {
+      username: {
+        presence: true,
+        format: {
+          pattern: /^[\w\s\d.,]+$/
+        },
       },
-    },
-    items: "presence"
+      items: "presence"
+    }
   });
 
   const items = get("items");
