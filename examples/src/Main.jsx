@@ -26,6 +26,6 @@ function renderTab(tab) {
   switch (tab) {
     case "mono":    return <MonoForm />;
     case "complex": return <ComplexForm />;
-    case "make":   return <MakeForm />;
+    case "make":    return <MakeForm />;
   }
 }

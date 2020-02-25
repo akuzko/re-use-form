@@ -555,6 +555,28 @@ merged into original config. The only dependency of resulting config object is
 the `config` from props, so make sure to memoize it to prevent unnecessary
 resolving on each render.
 
+#### Additional Helpers
+
+In `makeForm` use-case scenarios there might also be a need in some additional
+custom form helpers. For this purpose, one can use `helpers` config option.
+It's value should be a function that accepts existing helpers as it's only
+attributes and returns object with additional helpers that will be merged
+with existing ones.
+
+```js
+const [FormProvider, useOrderForm] = makeForm({
+  helpers: ({attrs} => ({
+    isNew: !!attrs.id
+  }))
+});
+````
+
+And then in any of your form components:
+
+```js
+const {$, isNew} = useOrderForm();
+````
+
 ### Internationalized Validation Error Messages
 
 Depending on adopted i18n solution in your application, there are different ways of
@@ -622,7 +644,7 @@ export function Form() {
 
 `useForm` hook returns object with following properties:
 
-- `useConfig` - helper hook used to declare dynamic form configuration that
+- `useConfig(fn, deps)` - helper hook used to declare dynamic form configuration that
   depends on dynamic values (external variables or form's input values).
 - `$(name)`, `input(name)` - returns a set of properties for input with a given
   name. `name` is a dot-separated string, i.e. `'foo.bar'` (for `bar` property
@@ -654,11 +676,11 @@ export function Form() {
   can be chained with `then` and `catch` callbacks. On successful validation,
   resolves promise with input value. On failed, rejects promise with errors
   object containing single key-value corresponding to input name and error.
-- `withValidation(callback)` - performs form validation and executes a callback
-  if there were no errors.
+- `withValidation(callback)` - returns a function that performs form validation
+  and executes a callback if there were no errors.
 - `reset([attrs])` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
-- `usePartial` - helper hook used to define form partials.
+- `usePartial(config)` - helper hook used to define form partials.
 
 ### More Convenient Usage
 

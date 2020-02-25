@@ -4,6 +4,7 @@ export const [FormProvider, useOrderForm] = makeForm({
   initial: {
     guest: false,
     username: "",
+    address: "",
     items: [{}, {}]
   },
   validations: {
@@ -15,5 +16,8 @@ export const [FormProvider, useOrderForm] = makeForm({
     "items": "presence",
     "items.*.id": "presence",
     "items.*.count": "presence"
-  }
+  },
+  helpers: ({attrs}) => ({
+    isFreeDelivery: attrs.address.includes("123")
+  })
 });

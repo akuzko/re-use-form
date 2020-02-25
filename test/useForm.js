@@ -25,11 +25,17 @@ describe("useForm", () => {
   });
 
   function Form() {
-    const {$} = useForm({initial: {foo: "foo"}});
+    const {$, isBar} = useForm({
+      initial: {foo: "foo"},
+      helpers: ({attrs}) => ({isBar: attrs.foo === "bar"})
+    });
 
     return (
       <div>
         <Input { ...$("foo") } className="foo" />
+        { isBar &&
+          <div className="is-bar">{ 'value of "foo" is "bar"' }</div>
+        }
       </div>
     );
   }
@@ -43,6 +49,13 @@ describe("useForm", () => {
     const wrapper = mount(<Form />);
     wrapper.find("input.foo").simulate("change", {target: {value: "foo2"}});
     expect(wrapper.find("input.foo[value='foo2']")).to.have.lengthOf(1);
+  });
+
+  it("provides additional form helpers", () => {
+    const wrapper = mount(<Form />);
+    expect(wrapper.find(".is-bar")).to.have.lengthOf(0);
+    wrapper.find("input.foo").simulate("change", {target: {value: "bar"}});
+    expect(wrapper.find(".is-bar")).to.have.lengthOf(1);
   });
 
   describe("custom onChange handlers", () => {
@@ -477,7 +490,7 @@ describe("useForm", () => {
       expect(wrapper.find(".items-0 .error")).to.have.lengthOf(1);
     });
 
-    it("validates inputs declared with useMoreValidations hook, and revalidates them on dependencies change", () => {
+    it("validates inputs declared with useConfig hook, and revalidates them on dependencies change", () => {
       const wrapper = mount(
         <FormProvider>
           <OrderForm />

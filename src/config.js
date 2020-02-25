@@ -23,7 +23,8 @@ export function resolveConfig(config) {
     pureHandlers: config.pureHandlers !== false && typeof WeakMap !== "undefined",
     validationOptions,
     validations,
-    validationDeps
+    validationDeps,
+    helpers: config.helpers ? [config.helpers] : []
   };
 }
 
@@ -88,7 +89,8 @@ export function mergeConfigs(config1, config2) {
     pureHandlers: resConfig1.pureHandlers,
     validationOptions: mergeValidationOptions(resConfig1.validationOptions, resConfig2.validationOptions),
     validations: mergeValidations(resConfig1.validations, resConfig2.validations),
-    validationDeps: mergeValidationDeps(resConfig1.validationDeps, resConfig2.validationDeps)
+    validationDeps: mergeValidationDeps(resConfig1.validationDeps, resConfig2.validationDeps),
+    helpers: [...resConfig1.helpers, ...resConfig2.helpers]
   };
 }
 

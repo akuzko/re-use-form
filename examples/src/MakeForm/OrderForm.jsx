@@ -5,10 +5,11 @@ import ItemForm from "./ItemForm";
 import FormControls from "./FormControls";
 
 export default function OrderForm() {
-  const {$, attrs, set, errors, getError, useConfig, attrs: {guest, items}} = useOrderForm();
+  const {$, attrs, set, errors, getError, useConfig, isFreeDelivery} = useOrderForm();
+  const {guest, items} = attrs;
 
   useConfig(() => {
-    return guest && {
+    return !guest && {
       validations: {
         username: "presence",
         address: "presence"
@@ -30,6 +31,9 @@ export default function OrderForm() {
       </div>
       <div className="address">
         <Input { ...$("address") } placeholder="Address" />
+        { isFreeDelivery &&
+          <div>Congratulations, delivery for this address is free!</div>
+        }
       </div>
 
       { getError("items") &&
