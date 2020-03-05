@@ -37,18 +37,18 @@ import { useForm } from 're-use-form';
 import { TextField, Select } from 'my-components/inputs';
 
 function MyForm({onSave}) {
-  const {input, attrs} = useForm(); // initializes form attributes with empty object.
+  const { input, attrs } = useForm(); // initializes form attributes with empty object.
 
   const save = () => onSave(attrs);
 
   return (
     <>
-      <TextField { ...input("email") } label="Email" />
-      <TextField { ...input("fullName") } label="Full Name" />
+      <TextField {...input('email')} label="Email" />
+      <TextField {...input('fullName')} label="Full Name" />
 
-      <Select { ...input("address.countryId") } options={ countryOptions } label="Country" />
-      <TextField { ...input("address.city") } label="City" />
-      <TextField { ...input("address.line") } label="Address" />
+      <Select {...input('address.countryId')} options={countryOptions} label="Country" />
+      <TextField {...input('address.city')} label="City" />
+      <TextField {...input('address.line')} label="Address" />
 
       <button onClick={ save }>Submit</button>
     </>
@@ -69,9 +69,9 @@ Keep in mind that although `$` is available by default, you can use any alias
 you find convenient when destructuring form helpers object returned by hook:
 
 ```js
-const {input: inp} = useForm();
+const { input: inp } = useForm();
 
-// and then you can use `<Input { ...inp("name") } />`
+// and then you can use `<Input {...inp('name')} />`
 ```
 
 ### Hook Config
@@ -84,13 +84,13 @@ configuration one should use `useConfig` hook (see bellow).
 
 Bellow are examples of `useForm` hook call with different config examples:
 ```js
-const {$} = useForm({
+const { $ } = useForm({
   initial: {
-    username: "",
+    username: '',
     items: [{}]
   },
   validations: {
-    username: "presence"
+    username: 'presence'
   }
 });
 ```
@@ -99,12 +99,12 @@ In cases when validation setup needs to share common options for all
 validation rules (like for internationalizing error messages, see corresponding
 section bellow), you can specify `defaultOptions` within validation setup:
 ```js
-const {t} = useTranslation("common");
-const {$} = useForm({
+const { t } = useTranslation('common');
+const { $ } = useForm({
   validations: {
-    defaultOptions: {t},
+    defaultOptions: { t },
     rules: {
-      username: "presence"
+      username: 'presence'
     }
   }
 });
@@ -115,15 +115,15 @@ one can use `useConfig` helper hook. It has the same signature as `useMemo`
 hook, and should it's function provide a config object, it will be merged with
 the configuration form already has:
 ```js
-const {$, useConfig, attrs: {guest}} = useForm({
-  initial: {username: "", address: "", guest: false}
+const { $, useConfig, attrs: { guest } } = useForm({
+  initial: { username: '', address: '', guest: false }
 });
 
 useConfig(() => {
   return !guest && {
     validations: {
-      username: "presence",
-      address: "presence"
+      username: 'presence',
+      address: 'presence'
     }
   };
 }, [guest]);
@@ -140,14 +140,14 @@ to input's name (the string value passed to `$`/`input` function call), and
 other properties can be populated by your input components:
 
 ```js
-function TextField({value, error, onChange, ...rest}) {
+function TextField({ value, error, onChange, ...rest }) {
   const handleChange = useCallback((e) => {
-    onChange(e.target.value, {event: e});
+    onChange(e.target.value, { event: e });
   }, []);
 
   return (
     <div>
-      <input value={ value } onChange={ handleChange } { ...rest } />
+      <input value={value} onChange={handleChange} {...rest} />
       { error &&
         <div className="error">{ error }</div>
       }
@@ -156,18 +156,18 @@ function TextField({value, error, onChange, ...rest}) {
 }
 
 function Form() {
-  const {$, set} = useForm();
+  const { $, set } = useForm();
 
   // uppercases user's input and logs event provided by TextField input component
-  const changeInput = useCallback((value, {name, event}) => {
+  const changeInput = useCallback((value, { name, event }) => {
     console.log(event);
     set(name, value.toUpperCase());
   }, []);
 
   return (
     <>
-      <TextField { ...$('username', changeInput) } label="Username" />
-      <TextField { ...$('address.postalCode', changeInput) } label="Postal Code" />
+      <TextField {...$('username', changeInput)} label="Username" />
+      <TextField {...$('address.postalCode', changeInput)} label="Postal Code" />
     </>
   );
 }
@@ -210,29 +210,29 @@ of the form. Also, the most common use case scenario is to allow user to
 specify custom error message when validation is failed.
 
 ```js
-import { defValidation } from "re-use-form";
+import { defValidation } from 're-use-form';
 
 // Bellow are very primitive validations defined for demonstration purposes.
 // All validation rules should be defined only once on your app initialization.
-defValidation("presence", (value, {message}) => {
+defValidation('presence', (value, { message }) => {
   if (!value) {
-    return message || "Cannot be blank";
+    return message || 'Cannot be blank';
   }
 });
 
-defValidation("email", (value, {message}) => {
+defValidation('email', (value, { message }) => {
   if (!value) return;
 
   if (!/.+@.+/.test(value)) {
-    return message || "Should be a valid email address";
+    return message || 'Should be a valid email address';
   }
 });
 
-defValidation("format", (value, {pattern, message}) => {
+defValidation('format', (value, { pattern, message }) => {
   if (!value) return;
 
   if (!pattern.test(value)) {
-    return message || "Invalid format";
+    return message || 'Invalid format';
   }
 });
 ```
@@ -246,22 +246,22 @@ custom function validations, if needed)
 import { useForm } from 're-use-form';
 
 function UserForm() {
-  const {$, validate} = useForm({
+  const { $, validate } = useForm({
     validations: {
-      "email": ["presence", "email"],
-      "fullName": "presence",
-      "address.city": ["presence", function(value) {
+      'email': ['presence', 'email'],
+      'fullName': 'presence',
+      'address.city': ['presence', function(value) {
         if (!value) return;
 
         if (!/^[A-Z]/.test(value)) {
-          return "Should start with capital letter";
+          return 'Should start with capital letter';
         }
       }],
-      "address.line": {
+      'address.line': {
         presence: true,
         format: {
           pattern: /^[\w\s\d\.,]+$/,
-          message: "Please enter a valid address"
+          message: 'Please enter a valid address'
         }
       }
     }
@@ -283,12 +283,12 @@ function UserForm() {
 
   return (
     <>
-      <TextField { ...$("email") } label="Email" />
-      <TextField { ...$("fullName") } label="Full Name" />
+      <TextField {...$('email')} label="Email" />
+      <TextField {...$('fullName')} label="Full Name" />
 
-      <Select { ...$("address.countryId") } options={ countryOptions } label="Country" />
-      <TextField { ...$("address.city") } label="City" />
-      <TextField { ...$("address.line") } label="Address" />
+      <Select {...$('address.countryId')} options={countryOptions} label="Country" />
+      <TextField {...$('address.city')} label="City" />
+      <TextField {...$('address.line')} label="Address" />
 
       <button onClick={ save }>Submit</button>
     </>
@@ -315,18 +315,18 @@ For example:
 function ItemForm() {
   const {$} = useForm({
     validations: {
-      min: ["presence", "numericality"],
+      min: ['presence', 'numericality'],
       max: {
         rules: [
-          "presence",
-          "numericality",
-          function(value, {attrs}) {
+          'presence',
+          'numericality',
+          function(value, { attrs }) {
             if (value <= attrs.min) {
-              return "Should be greater than 'min'";
+              return 'Should be greater than \'min\'';
             }
           }
         ],
-        deps: ["min"]
+        deps: ['min']
       }
     }
   });
@@ -342,14 +342,14 @@ for them using wildcards:
 
 ```js
 function OrderForm() {
-  const {$} = useForm({
-    initial: {items: []},
+  const { $ } = useForm({
+    initial: { items: [] },
     validations: {
-      "email": ["presence", "email"],
-      "items.*.name": "presence",
-      "items.*.count": {
+      'email': ['presence', 'email'],
+      'items.*.name': 'presence',
+      'items.*.count': {
         presence: true,
-        numericality: {greaterThan: 10}
+        numericality: { greaterThan: 10 }
       }
     }
   });
@@ -362,15 +362,15 @@ It is also possible to specify dependencies for wildcard validation:
 
 ```js
 function OrderForm() {
-  const {$} = useForm({
-    initial: {items: []},
+  const { $ } = useForm({
+    initial: { items: [] },
     validations: {
-      "items.*.id": "presence",
-      "items.*.min": "presence",
-      "items.*.max": {
+      'items.*.id': 'presence',
+      'items.*.min': 'presence',
+      'items.*.max': {
         rules: [
-          "presence",
-          function(value, {name, attrs}) {
+          'presence',
+          function(value, { name, attrs }) {
             const index = +name.split(".")[1];
 
             if (value <= attrs.items[index].min) {
@@ -378,7 +378,7 @@ function OrderForm() {
             }
           }
         ],
-        deps: ["items.*.min"]
+        deps: ['items.*.min']
       }
     }
   });
@@ -398,7 +398,7 @@ only if form had no errors:
 ```js
 const {$, withValidation} = useForm({
   validations: {
-    name: "presence"
+    name: 'presence'
   }
 });
 
@@ -408,8 +408,8 @@ const save = withValidation((attrs) => {
 
 return (
   <>
-    <Input { ...$("name") } />
-    <button onClick={ save }>Submit</button>
+    <Input {...$("name")} />
+    <button onClick={save}>Submit</button>
   </>
 );
 ```
@@ -424,18 +424,18 @@ components for better maintainability.
 
 ```js
 function OrderForm() {
-  const {$, get, validate, usePartial} = useForm({
-    initial: {username: "", items: [{}]},
+  const { $, get, validate, usePartial } = useForm({
+    initial: { username: '', items: [{}] },
     validations: {
-      username: "presence"
+      username: 'presence'
     }
   });
 
   return (
     <div>
-      <Input { ...$("username") } />
-      { get("items").map((item, i) => (
-          <ItemForm key={ i } usePartial={ usePartial } index={ i } />
+      <Input {...$('username')} />
+      { get('items').map((item, i) => (
+          <ItemForm key={i} usePartial={usePartial} index={i} />
         ))
       }
       <button onClick={ validate }>Validate</button>
@@ -443,26 +443,26 @@ function OrderForm() {
   );
 }
 
-function ItemForm({usePartial, index}) {
-  const {$} = usePartial({
+function ItemForm({ usePartial, index }) {
+  const { $ } = usePartial({
     prefix: `items.${index}`,
     validations: {
-      name: "presence",
+      name: 'presence',
       count: {
-        rules: ["presence", function(value, {attrs}) {
-          if (attrs.username === "guest" && +value > 10) {
-            return "Guests are not allowed that many";
+        rules: ['presence', function(value, { attrs }) {
+          if (attrs.username === 'guest' && +value > 10) {
+            return 'Guests are not allowed that many';
           }
         }],
-        deps: ["username"]
+        deps: ['username']
       }
     }
   });
 
   return (
     <div>
-      <Input { ...$("name") } />
-      <Input { ...$("count") } />
+      <Input {...$('name')} />
+      <Input {...$('count')} />
     </div>
   );
 }
@@ -484,22 +484,22 @@ one can use `makeForm` helper function:
 
 ```js
 const [FormProvider, useOrderForm] = makeForm({
-  initial: {username: "", items: [{}]},
+  initial: { username: '', items: [{}] },
   validations: {
-    "username": "presence",
-    "items.*.name": "presence",
-    "items.*.count": "presence"
+    'username': 'presence',
+    'items.*.name': 'presence',
+    'items.*.count': 'presence'
   }
 });
 
 function OrderForm() {
-  const {$, attrs} = useOrderForm();
+  const { $, attrs } = useOrderForm();
 
   return (
     <div>
-      <Input { ...$("username") } />
+      <Input {...$('username')} />
       { attrs.items.map((item, i) => (
-          <ItemForm key={ i } index={ i } />
+          <ItemForm key={i} index={i} />
         ))
       }
       <FormControls />
@@ -508,37 +508,37 @@ function OrderForm() {
 }
 
 function FormControls() {
-  const {reset, validate} = useOrderForm();
+  const { reset, validate } = useOrderForm();
 
   return (
     <div>
-      <button onClick={ reset }>Reset</button>
-      <button onClick={ validate }>Validate</button>
+      <button onClick={reset}>Reset</button>
+      <button onClick={validate}>Validate</button>
     </div>
   );
 }
 
-function ItemForm({index}) {
-  const {$} = useOrderForm();
+function ItemForm({ index }) {
+  const { $ } = useOrderForm();
 
   return (
     <div>
-      <Input { ...$(`items.${index}.name`) } />
-      <Input { ...$(`items.${index}.count`) } />
+      <Input {...$(`items.${index}.name`)} />
+      <Input {...$(`items.${index}.count`)} />
     </div>
   );
 }
 
 function OrderEditor() {
-  const {t} = useTranslation("common");
+  const { t } = useTranslation("common");
   const config = useMemo(() => ({
     validations: {
-      defaultOptions: {t}
+      defaultOptions: { t }
     }
   }), []);
 
   return (
-    <FormProvider config={ config }>
+    <FormProvider config={config}>
       <OrderForm />
     </FormProvider>
   );
@@ -565,7 +565,7 @@ with existing ones.
 
 ```js
 const [FormProvider, useOrderForm] = makeForm({
-  helpers: ({attrs} => ({
+  helpers: ({ attrs } => ({
     isNew: !!attrs.id
   }))
 });
@@ -574,7 +574,7 @@ const [FormProvider, useOrderForm] = makeForm({
 And then in any of your form components:
 
 ```js
-const {$, isNew} = useOrderForm();
+const { $, isNew } = useOrderForm();
 ````
 
 ### Internationalized Validation Error Messages
@@ -590,10 +590,10 @@ with gettext-like usage. Probably, this approach provides the most simple and
 easy-to-use way to internationalize error messages:
 
 ```js
-import { defValidation } from "re-use-form";
-import { t } from "ttag";
+import { defValidation } from 're-use-form';
+import { t } from 'ttag';
 
-defValidation("presence", (value, {message}) => {
+defValidation('presence', (value, { message }) => {
   if (!value) {
     return message || t`Can't be blank`;
   }
@@ -611,27 +611,27 @@ this `t` function specified only once without need to explicitly mention it
 over and over again:
 
 ```js
-import { defValidation } from "re-use-form";
+import { defValidation } from 're-use-form';
 
-defValidation("presence", (value, {t, message}) => {
+defValidation('presence', (value, { t, message }) => {
   if (!value) {
-    return message || t("errors.cannot_be_blank");
+    return message || t('errors.cannot_be_blank');
   }
 });
 ```
 And then in form:
 ```js
-import { useForm } from "re-use-form";
-import { useTranslation } from "react-i18next";
+import { useForm } from 're-use-form';
+import { useTranslation } from 'react-i18next';
 
 export function Form() {
-  const {t} = useTranslation("common");
-  const {$} = useForm({
+  const { t } = useTranslation('common');
+  const { $ } = useForm({
     validations: {
-      defaultOptions: {t},
+      defaultOptions: { t },
       rules: {
-        username: "presence",
-        email: ["presence", "email"]
+        username: 'presence',
+        email: ['presence', 'email']
       }
     }
   });
@@ -689,13 +689,13 @@ application, alongside with your inputs. For instance, you might have
 `/components/form/index.js` file with following content:
 
 ```js
-export * from "re-use-form";
-export * from "./inputs";
+export * from 're-use-form';
+export * from './inputs';
 ```
 
 And then in your logic components you might have:
 ```js
-import { useForm, Input } from "components/form";
+import { useForm, Input } from 'components/form';
 ```
 
 ## License

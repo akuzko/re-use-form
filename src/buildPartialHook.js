@@ -1,6 +1,6 @@
-import { useEffect, useCallback } from "react";
-import { addConfig, removeConfig } from "./reducer";
-import { resolveConfig } from "./config";
+import { useEffect, useCallback } from 'react';
+import { addConfig, removeConfig } from './reducer';
+import { resolveConfig } from './config';
 
 export default function buildPartialHook({
     dispatch,
@@ -9,7 +9,7 @@ export default function buildPartialHook({
     getError: formGetError,
     input: formInput
   }) {
-  return function usePartial({prefix, ...config}) {
+  return function usePartial({ prefix, ...config }) {
     useEffect(() => {
       const validations = config.validations || {};
 
@@ -36,7 +36,7 @@ export default function buildPartialHook({
     const get = useCallback(path => path ? formGet(`${prefix}.${path}`) : formGet(prefix), [attrs]);
 
     const set = useCallback((pathOrAttrs, value) => {
-      if (typeof pathOrAttrs === "object") {
+      if (typeof pathOrAttrs === 'object') {
         const partialObj = {};
 
         for (const key in pathOrAttrs) {
@@ -53,6 +53,6 @@ export default function buildPartialHook({
 
     const input = (path, onChange) => formInput(`${prefix}.${path}`, onChange);
 
-    return {attrs, get, set, getError, input, $: input};
+    return { attrs, get, set, getError, input, $: input };
   };
 }

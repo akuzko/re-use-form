@@ -1,49 +1,49 @@
-import React, { Fragment, useCallback } from "react";
-import { Input, Checkbox } from "../inputs";
-import { useOrderForm } from "./orderForm";
-import ItemForm from "./ItemForm";
-import FormControls from "./FormControls";
+import React, { Fragment, useCallback } from 'react';
+import { Input, Checkbox } from '../inputs';
+import { useOrderForm } from './orderForm';
+import ItemForm from './ItemForm';
+import FormControls from './FormControls';
 
 export default function OrderForm() {
-  const {$, attrs, set, errors, getError, useConfig, isFreeDelivery} = useOrderForm();
-  const {guest, items} = attrs;
+  const { $, attrs, set, errors, getError, useConfig, isFreeDelivery } = useOrderForm();
+  const { guest, items } = attrs;
 
   useConfig(() => {
     return !guest && {
       validations: {
-        username: "presence",
-        address: "presence"
+        username: 'presence',
+        address: 'presence'
       }
     };
   }, [guest]);
 
   const addItem = useCallback(() => {
-    set("items", [...items, {}]);
+    set('items', [...items, {}]);
   }, [items]);
 
   return (
     <Fragment>
       <div className="guest">
-        <Checkbox { ...$("guest") } label="Guest" />
+        <Checkbox {...$('guest')} label="Guest" />
       </div>
       <div className="username">
-        <Input { ...$("username") } placeholder="Username" />
+        <Input {...$('username')} placeholder="Username" />
       </div>
       <div className="address">
-        <Input { ...$("address") } placeholder="Address" />
+        <Input {...$('address')} placeholder="Address" />
         { isFreeDelivery &&
           <div>Congratulations, delivery for this address is free!</div>
         }
       </div>
 
-      { getError("items") &&
+      { getError('items') &&
         <div>At least one item is required</div>
       }
 
-      <button onClick={ addItem }>Add Item</button>
+      <button onClick={addItem}>Add Item</button>
 
       { items.map((_item, i) => (
-          <ItemForm key={ i } index={ i } />
+          <ItemForm key={i} index={i} />
         ))
       }
 

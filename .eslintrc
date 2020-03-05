@@ -27,8 +27,11 @@
   },
 
   "rules": {
-    "quotes": ["warn", "double", {"avoidEscape": true}],
+    "quotes": ["warn", "single", {"avoidEscape": true}],
     "semi": ["warn", "always"],
-    "no-unused-vars": ["error", {"varsIgnorePattern": "^_"}]
+    "object-curly-spacing": ["warn", "always"],
+    "no-unused-vars": ["error", {"varsIgnorePattern": "^_"}],
+
+    "react/jsx-curly-spacing": ["warn", {"when": "never", "children": {"when": "always"}}]
   }
 }

@@ -1,7 +1,7 @@
-export const DEFAULT_CONFIG = {initial: {}};
+export const DEFAULT_CONFIG = { initial: {} };
 
 function isResolved(config) {
-  return "pureHandlers" in config;
+  return 'pureHandlers' in config;
 }
 
 export function resolveConfig(config) {
@@ -11,7 +11,7 @@ export function resolveConfig(config) {
   const validationOptions = {};
   let validationsConfig = config.validations || {};
 
-  if ("defaultOptions" in validationsConfig) {
+  if ('defaultOptions' in validationsConfig) {
     Object.assign(validationOptions, validationsConfig.defaultOptions);
     validationsConfig = validationsConfig.rules;
   }
@@ -20,7 +20,7 @@ export function resolveConfig(config) {
 
   return {
     attrs: config.initial,
-    pureHandlers: config.pureHandlers !== false && typeof WeakMap !== "undefined",
+    pureHandlers: config.pureHandlers !== false && typeof WeakMap !== 'undefined',
     validationOptions,
     validations,
     validationDeps,
@@ -29,12 +29,12 @@ export function resolveConfig(config) {
 }
 
 function extractValidationDeps(validationsConfig) {
-  const validations = {...validationsConfig};
+  const validations = { ...validationsConfig };
   const inputDeps = {};
 
   for (const key in validations) {
-    if (typeof validations[key] === "object" &&
-        "rules" in validations[key] && "deps" in validations[key]
+    if (typeof validations[key] === 'object' &&
+        'rules' in validations[key] && 'deps' in validations[key]
     ) {
       validations[key].deps.forEach((dep) => {
         if (!(dep in inputDeps)) {
@@ -95,7 +95,7 @@ export function mergeConfigs(config1, config2) {
 }
 
 function mergeObj(obj1, obj2, resolver) {
-  const merged = {...obj1};
+  const merged = { ...obj1 };
 
   for (const key in obj2) {
     if (key in obj1) {

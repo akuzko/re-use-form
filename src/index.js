@@ -1,3 +1,3 @@
-export * from "./useForm";
-export makeForm from "./makeForm";
-export { defValidation } from "./validations";
+export * from './useForm';
+export makeForm from './makeForm';
+export { defValidation } from './validations';

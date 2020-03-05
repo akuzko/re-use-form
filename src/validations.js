@@ -1,4 +1,4 @@
-import get from "get-lookup";
+import get from 'get-lookup';
 
 const validationRules = {};
 
@@ -11,7 +11,7 @@ export function validateAttr(validations, options, name, value) {
 }
 
 export function validateRule(validations, options, name, errors) {
-  if (name.includes("*")) {
+  if (name.includes('*')) {
     callEachValidator(validations, options, name, errors);
   } else {
     errors[name] = callValueValidator(validations, options, name, get(options.attrs, name));
@@ -20,7 +20,7 @@ export function validateRule(validations, options, name, errors) {
 
 function callEachValidator(validations, options, name, errors) {
   const match = name.match(/^([^*]+)\.\*(.+)?$/);
-  const [collectionName, rest = ""] = match.slice(1);
+  const [collectionName, rest = ''] = match.slice(1);
 
   (get(options.attrs, collectionName) || []).forEach((_item, i) => {
     validateRule(validations, options, `${collectionName}.${i}${rest}`, errors);
@@ -30,20 +30,20 @@ function callEachValidator(validations, options, name, errors) {
 function callValueValidator(validations, options, name, value) {
   const validator = validations[name] || validations[wildcard(name)];
 
-  return callValidator(validator, value, {...options, name});
+  return callValidator(validator, value, { ...options, name });
 }
 
 function callValidator(validator, value, options) {
   if (Array.isArray(validator)) {
     return callArrayValidator(validator, value, options);
   }
-  if (typeof validator === "string") {
+  if (typeof validator === 'string') {
     return callStringValidator(validator, value, options);
   }
-  if (typeof validator === "function") {
+  if (typeof validator === 'function') {
     return validator(value, options);
   }
-  if (validator && (typeof validator === "object")) {
+  if (validator && (typeof validator === 'object')) {
     return callObjectValidator(validator, value, options);
   }
 }
@@ -64,8 +64,8 @@ function callObjectValidator(obj, value, options) {
   for (const name in obj) {
     if (!obj[name]) continue;
 
-    const validatorOpts = typeof obj[name] === "object" ? obj[name] : {};
-    const error = callStringValidator(name, value, {...options, ...validatorOpts});
+    const validatorOpts = typeof obj[name] === 'object' ? obj[name] : {};
+    const error = callStringValidator(name, value, { ...options, ...validatorOpts });
 
     if (error) return error;
   }
@@ -81,7 +81,7 @@ function stringToValidator(name) {
 }
 
 export function wildcard(name) {
-  return name.replace(/\d+/g, "*");
+  return name.replace(/\d+/g, '*');
 }
 
 export class ValidationPromise {

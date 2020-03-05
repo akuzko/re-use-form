@@ -1,16 +1,16 @@
-import React, { useCallback } from "react";
-import { Input } from "../inputs";
-import ItemForm from "./ItemForm";
+import React, { useCallback } from 'react';
+import { Input } from '../inputs';
+import ItemForm from './ItemForm';
 
-import { useForm } from "../../../src";
+import { useForm } from '../../../src';
 
 const initialForm = {
-  username: "",
+  username: '',
   items: [{}, {}]
 };
 
 export default function ComplexForm() {
-  const {$, get, set, getError, reset: doReset, validate, usePartial} = useForm({
+  const { $, get, set, getError, reset: doReset, validate, usePartial } = useForm({
     initial: initialForm,
     validations: {
       username: {
@@ -19,21 +19,21 @@ export default function ComplexForm() {
           pattern: /^[\w\s\d.,]+$/
         },
       },
-      items: "presence"
+      items: 'presence'
     }
   });
 
-  const items = get("items");
+  const items = get('items');
 
   const addItem = useCallback(() => {
-    set("items", [...items, {}]);
+    set('items', [...items, {}]);
   }, [items]);
 
   const removeItem = useCallback((i) => {
     const nextItems = [...items];
 
     nextItems.splice(i, 1);
-    set("items", nextItems);
+    set('items', nextItems);
   }, [items]);
 
   const reset = useCallback(() => doReset(), []);
@@ -41,28 +41,28 @@ export default function ComplexForm() {
   return (
     <>
       <div className="username">
-        <Input { ...$("username") } placeholder="Username" />
+        <Input {...$('username')} placeholder="Username" />
       </div>
 
-      { getError("items") &&
+      { getError('items') &&
         <div>At least one item is required</div>
       }
 
-      <button onClick={ addItem }>Add Item</button>
+      <button onClick={addItem}>Add Item</button>
 
       { items.map((_item, i) => (
           <ItemForm
-            key={ i }
-            index={ i }
-            usePartial={ usePartial }
-            onRemove={ () => removeItem(i) }
+            key={i}
+            index={i}
+            usePartial={usePartial}
+            onRemove={() => removeItem(i)}
           />
         ))
       }
 
       <div>
-        <button onClick={ reset }>Reset</button>
-        <button onClick={ validate }>Validate</button>
+        <button onClick={reset}>Reset</button>
+        <button onClick={validate}>Validate</button>
       </div>
 
       <div>{ JSON.stringify(get()) }</div>

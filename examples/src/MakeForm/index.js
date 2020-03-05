@@ -1,1 +1,1 @@
-export default from "./MakeForm";
+export default from './MakeForm';

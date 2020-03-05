@@ -1,1 +1,1 @@
-export default from "./MonoForm";
+export default from './MonoForm';

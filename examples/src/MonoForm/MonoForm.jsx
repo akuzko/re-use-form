@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useCallback } from "react";
-import { Input, Checkbox } from "../inputs";
+import React, { useState, useMemo, useCallback } from 'react';
+import { Input, Checkbox } from '../inputs';
 
-import { useForm } from "../../../src";
+import { useForm } from '../../../src';
 
 function useTranslation() {
-  return {t};
+  return { t };
 
   function t(key) {
     return key.match(/\.([^.]+)$/)[1]
@@ -13,7 +13,7 @@ function useTranslation() {
 }
 
 const initialForm = {
-  username: "",
+  username: '',
   items: []
 };
 
@@ -21,7 +21,7 @@ export default function MonoForm() {
   const [saving, setSaving] = useState(false);
   const [validationEnabled, setValidationEnabled] = useState(true);
   const [itemsValidationEnabled, setItemsValidationEnabled] = useState(true);
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const {
     $,
     get,
@@ -35,14 +35,14 @@ export default function MonoForm() {
   } = useForm({
     initial: initialForm,
     validations: {
-      defaultOptions: {t}
+      defaultOptions: { t }
     }
   });
 
   useConfig(() => {
     return validationEnabled && {
       validations: {
-        "username": {
+        'username': {
           presence: true,
           format: {
             pattern: /^[\w\s\d.,]+$/
@@ -55,70 +55,70 @@ export default function MonoForm() {
   useConfig(() => {
     return validationEnabled && itemsValidationEnabled && {
       validations: {
-        "items": "presence",
-        "items.*.id": "presence",
-        "items.*.count": "presence",
-        "items.*.maxCount": {
-          rules: function(value, {name, attrs}) {
-            const index = name.split(".")[1];
+        'items': 'presence',
+        'items.*.id': 'presence',
+        'items.*.count': 'presence',
+        'items.*.maxCount': {
+          rules: function(value, { name, attrs }) {
+            const index = name.split('.')[1];
 
             if (value && +value < +attrs.items[index].count) {
               return `Should be greater than ${attrs.items[index].count}`;
             }
           },
-          deps: ["items.*.count"]
+          deps: ['items.*.count']
         }
       }
     };
   }, [validationEnabled, itemsValidationEnabled]);
 
-  const items = get("items");
+  const items = get('items');
 
   const changeUsername = useCallback((value) => {
-    set("username", value.toUpperCase());
+    set('username', value.toUpperCase());
   }, []);
 
-  const changeItemId = useCallback((value, {name}) => {
-    const index = +name.split(".")[1];
+  const changeItemId = useCallback((value, { name }) => {
+    const index = +name.split('.')[1];
 
     set({
       [name]: value,
-      [`items.${index}.count`]: ""
+      [`items.${index}.count`]: ''
     });
   }, []);
 
-  const changeItemCount = useCallback((value, {name}) => {
+  const changeItemCount = useCallback((value, { name }) => {
     if (isFinite(+value)) {
       set(name, value);
     }
   }, []);
 
   const addItem = useCallback(() => {
-    set("items", [...items, {}]);
+    set('items', [...items, {}]);
   }, [items]);
 
   const removeItem = useCallback((i) => {
     const nextItems = [...items];
 
     nextItems.splice(i, 1);
-    set("items", nextItems);
+    set('items', nextItems);
   }, [items]);
 
   const validate = useCallback(() => {
     doValidate()
-      .then(attrs => console.log("Form is valid", attrs))
-      .catch(errors => console.log("Form has errors", errors));
+      .then(attrs => console.log('Form is valid', attrs))
+      .catch(errors => console.log('Form has errors', errors));
   }, []);
 
   const validateUsername = useCallback(() => {
-    doValidate("username");
+    doValidate('username');
   }, []);
 
   const save = useCallback(() => {
     setSaving(true);
     setTimeout(() => {
       setSaving(false);
-      setError("items.0.count", t("form.validations.not_enough!"));
+      setError('items.0.count', t('form.validations.not_enough!'));
     }, 2000);
   }, []);
 
@@ -131,35 +131,35 @@ export default function MonoForm() {
   return (
     <>
       <div>
-        <Checkbox value={ validationEnabled } onChange={ setValidationEnabled } label="Username Validation" />
+        <Checkbox value={validationEnabled} onChange={setValidationEnabled} label="Username Validation" />
       </div>
       <div>
-        <Checkbox value={ itemsValidationEnabled } onChange={ setItemsValidationEnabled } label="Items Validation" />
+        <Checkbox value={itemsValidationEnabled} onChange={setItemsValidationEnabled} label="Items Validation" />
       </div>
 
       <div className="username">
-        <Input { ...$("username", changeUsername) } onBlur={ validateUsername } placeholder="Username" />
+        <Input {...$('username', changeUsername)} onBlur={validateUsername} placeholder="Username" />
       </div>
 
-      { getError("items") &&
+      { getError('items') &&
         <div>At least one item is required</div>
       }
 
-      <button onClick={ addItem }>Add Item</button>
+      <button onClick={addItem}>Add Item</button>
 
       { items.map((_item, i) => (
-          <div key={ i }>
+          <div key={i}>
             <div>
-              <Input { ...$(`items.${i}.id`, changeItemId) } placeholder="Item ID" />
+              <Input {...$(`items.${i}.id`, changeItemId)} placeholder="Item ID" />
             </div>
             <div>
-              <Input { ...$(`items.${i}.count`, changeItemCount) } placeholder="Item Count" />
+              <Input {...$(`items.${i}.count`, changeItemCount)} placeholder="Item Count" />
             </div>
             <div>
-              <Input { ...$(`items.${i}.maxCount`, changeItemCount) } placeholder="Max Count" />
+              <Input {...$(`items.${i}.maxCount`, changeItemCount)} placeholder="Max Count" />
             </div>
 
-            <button onClick={ () => removeItem(i) }>Remove this Item</button>
+            <button onClick={() => removeItem(i)}>Remove this Item</button>
           </div>
         ))
       }
@@ -169,9 +169,9 @@ export default function MonoForm() {
       }
 
       <div>
-        <button onClick={ reset }>Reset</button>
-        <button onClick={ validate }>Validate</button>
-        <button onClick={ submit }>Submit</button>
+        <button onClick={reset}>Reset</button>
+        <button onClick={validate}>Validate</button>
+        <button onClick={submit}>Submit</button>
       </div>
 
       <div>{ JSON.stringify(get()) }</div>

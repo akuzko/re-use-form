@@ -1,6 +1,6 @@
-import React from "react";
-import PropTypes from "prop-types";
-import { Input } from "../inputs";
+import React from 'react';
+import PropTypes from 'prop-types';
+import { Input } from '../inputs';
 
 ItemForm.propTypes = {
   index: PropTypes.number,
@@ -8,21 +8,21 @@ ItemForm.propTypes = {
   onRemove: PropTypes.func
 };
 
-export default function ItemForm({index, usePartial, onRemove}) {
-  const {$} = usePartial({
+export default function ItemForm({ index, usePartial, onRemove }) {
+  const { $ } = usePartial({
     prefix: `items.${index}`,
     validations: {
-      id: "presence",
+      id: 'presence',
       count: {
         rules: [
-          "presence",
-          function(value, {attrs}) {
-            if (attrs.username != "richguy" && +value > 10) {
+          'presence',
+          function(value, { attrs }) {
+            if (attrs.username != 'richguy' && +value > 10) {
               return "You can't afford this much!";
             }
           }
         ],
-        deps: ["username"]
+        deps: ['username']
       }
     }
   });
@@ -30,13 +30,13 @@ export default function ItemForm({index, usePartial, onRemove}) {
   return (
     <div>
       <div>
-        <Input { ...$("id") } placeholder="Item ID" />
+        <Input {...$('id')} placeholder="Item ID" />
       </div>
       <div>
-        <Input { ...$("count") } placeholder="Item Count" />
+        <Input {...$('count')} placeholder="Item Count" />
       </div>
 
-      <button onClick={ onRemove }>Remove this Item</button>
+      <button onClick={onRemove}>Remove this Item</button>
     </div>
   );
 }

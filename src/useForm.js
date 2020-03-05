@@ -1,5 +1,5 @@
-import { useReducer, useCallback, useEffect, useMemo } from "react";
-import getValue from "get-lookup";
+import { useReducer, useCallback, useEffect, useMemo } from 'react';
+import getValue from 'get-lookup';
 import reducer, {
   init,
   setAttr,
@@ -10,15 +10,15 @@ import reducer, {
   setError as doSetError,
   setErrors as doSetErrors,
   reset as doReset
-} from "./reducer";
-import { ValidationPromise } from "./validations";
-import buildPartialHook from "./buildPartialHook";
-import HandlersCache from "./HandlersCache";
-import { resolveConfig, DEFAULT_CONFIG } from "./config";
+} from './reducer';
+import { ValidationPromise } from './validations';
+import buildPartialHook from './buildPartialHook';
+import HandlersCache from './HandlersCache';
+import { resolveConfig, DEFAULT_CONFIG } from './config';
 
 export function useForm(config = DEFAULT_CONFIG) {
   const initial = useMemo(() => init(config), []);
-  const [{attrs, errors, pureHandlers, helpers}, dispatch] = useReducer(reducer, initial);
+  const [{ attrs, errors, pureHandlers, helpers }, dispatch] = useReducer(reducer, initial);
   const isValid = !Object.values(errors).some(Boolean);
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
@@ -26,7 +26,7 @@ export function useForm(config = DEFAULT_CONFIG) {
   const get = useCallback(name => name ? getValue(attrs, name) : attrs, [attrs]);
 
   const set = useCallback((pathOrAttrs, value) => {
-    if (typeof pathOrAttrs === "object") {
+    if (typeof pathOrAttrs === 'object') {
       return dispatch(setAttrs(pathOrAttrs));
     } else {
       return dispatch(setAttr(pathOrAttrs, value));
@@ -34,7 +34,7 @@ export function useForm(config = DEFAULT_CONFIG) {
   }, []);
 
   const validate = useCallback((name) => {
-    if (typeof name !== "string") name = null;
+    if (typeof name !== 'string') name = null;
 
     return new ValidationPromise((resolve, reject) => {
       dispatch(doValidate(name, resolve, reject));
@@ -46,7 +46,7 @@ export function useForm(config = DEFAULT_CONFIG) {
   const setError = useCallback((name, error) => dispatch(doSetError(name, error)), []);
 
   const setErrors = useCallback((errors) => {
-    if (errors && typeof errors === "object" && errors.constructor === Object) {
+    if (errors && typeof errors === 'object' && errors.constructor === Object) {
       return dispatch(doSetErrors(errors));
     }
     throw errors;
@@ -58,18 +58,18 @@ export function useForm(config = DEFAULT_CONFIG) {
 
   const withValidation = (callback) => () => validate().then(callback);
 
-  const defaultOnChange = useCallback((value, {name}) => set(name, value), []);
+  const defaultOnChange = useCallback((value, { name }) => set(name, value), []);
 
   const input = (name, onChange = defaultOnChange) => {
     return {
       value: get(name),
-      onChange: handlersCache.fetch(name, onChange, () => (value, meta) => onChange(value, {...meta, name})),
+      onChange: handlersCache.fetch(name, onChange, () => (value, meta) => onChange(value, { ...meta, name })),
       error: errors[name],
       name
     };
   };
 
-  const usePartial = buildPartialHook({dispatch, get, set, getError, input});
+  const usePartial = buildPartialHook({ dispatch, get, set, getError, input });
 
   const useConfig = (fn, deps) => {
     useEffect(() => {
@@ -101,5 +101,5 @@ export function useForm(config = DEFAULT_CONFIG) {
     $: input
   };
 
-  return helpers.reduce((hlp, fn) => ({...hlp, ...fn(hlp)}), formHelpers);
+  return helpers.reduce((hlp, fn) => ({ ...hlp, ...fn(hlp) }), formHelpers);
 }

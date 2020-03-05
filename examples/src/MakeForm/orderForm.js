@@ -1,23 +1,23 @@
-import { makeForm } from "../../../src";
+import { makeForm } from '../../../src';
 
 export const [FormProvider, useOrderForm] = makeForm({
   initial: {
     guest: false,
-    username: "",
-    address: "",
+    username: '',
+    address: '',
     items: [{}, {}]
   },
   validations: {
-    "username": {
+    'username': {
       format: {
         pattern: /^[\w\s\d.,]+$/
       }
     },
-    "items": "presence",
-    "items.*.id": "presence",
-    "items.*.count": "presence"
+    'items': 'presence',
+    'items.*.id': 'presence',
+    'items.*.count': 'presence'
   },
-  helpers: ({attrs}) => ({
-    isFreeDelivery: attrs.address.includes("123")
+  helpers: ({ attrs }) => ({
+    isFreeDelivery: attrs.address.includes('123')
   })
 });
