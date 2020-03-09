@@ -177,16 +177,17 @@ export default function reducer(state, action) {
   }
 }
 
-export function init(config) {
+export function init(config, secondaryConfig) {
   const resolved = resolveConfig(config);
   const { attrs, ...rest } = resolved;
+  const fullConfig = secondaryConfig ? mergeConfigs(rest, secondaryConfig) : rest;
 
   return {
     initialAttrs: attrs,
     attrs,
     errors: {},
-    configs: [resolved],
-    ...rest
+    configs: [fullConfig],
+    ...fullConfig
   };
 }
 

@@ -1,7 +1,7 @@
 export const DEFAULT_CONFIG = { initial: {} };
 
 function isResolved(config) {
-  return 'pureHandlers' in config;
+  return 'validationDeps' in config;
 }
 
 export function resolveConfig(config) {

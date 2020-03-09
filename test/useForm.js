@@ -444,7 +444,7 @@ describe('useForm', () => {
     });
 
     function OrderForm() {
-      const { $, validate, useConfig, attrs: { guest, items } } = useOrderForm();
+      const { $, validate, useConfig, helperText, attrs: { guest, items } } = useOrderForm();
 
       useConfig(() => {
         if (!guest) {
@@ -464,6 +464,9 @@ describe('useForm', () => {
             ))
           }
           <button onClick={validate} className="validate">Validate</button>
+          { helperText &&
+            <div className="helper-text">{ helperText }</div>
+          }
         </div>
       );
     }
@@ -483,7 +486,10 @@ describe('useForm', () => {
               lessThan: 10
             }
           }
-        }
+        },
+        helpers: () => ({
+          helperText: 'helper-text'
+        })
       };
 
       const wrapper = mount(
@@ -492,6 +498,7 @@ describe('useForm', () => {
         </FormProvider>
       );
 
+      expect(wrapper.find('.helper-text').text()).to.eq('helper-text');
       expect(wrapper.find('.error')).to.have.lengthOf(0);
       wrapper.find('.validate').simulate('click');
       expect(wrapper.find('.username .error')).to.have.lengthOf(1);

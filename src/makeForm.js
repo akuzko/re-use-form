@@ -6,7 +6,7 @@ export default function makeForm(mainConfig) {
 
   // eslint-disable-next-line react/prop-types
   function FormProvider({ config, children }) {
-    const helpers = useForm(mainConfig);
+    const helpers = useForm(mainConfig, config);
 
     helpers.useConfig(() => config, [config]);
 

@@ -16,8 +16,8 @@ import buildPartialHook from './buildPartialHook';
 import HandlersCache from './HandlersCache';
 import { resolveConfig, DEFAULT_CONFIG } from './config';
 
-export function useForm(config = DEFAULT_CONFIG) {
-  const initial = useMemo(() => init(config), []);
+export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
+  const initial = useMemo(() => init(config, secondaryConfig), []);
   const [{ attrs, errors, pureHandlers, helpers }, dispatch] = useReducer(reducer, initial);
   const isValid = !Object.values(errors).some(Boolean);
 
