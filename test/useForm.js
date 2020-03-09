@@ -150,25 +150,36 @@ describe("useForm", () => {
 
     describe("validating single input value stand-alone", () => {
       function Form() {
-        const {$, validate} = useForm({foo: ""}, {
-          foo: "presence"
+        const {$, validate} = useForm({foo: "", bar: { baz: "" }}, {
+          "foo": "presence",
+          "bar.baz": "presence"
         });
 
         const validateFoo = () => validate("foo");
+        const validateBaz = () => validate("bar.baz");
 
         return (
           <div>
-            <Input { ...$("foo") } onBlur={ validateFoo } className="foo" />
+            <Input { ...$("foo") } onBlur={ validateFoo } wrapperClassName="foo" />
+            <Input { ...$("bar.baz") } onBlur={ validateBaz } wrapperClassName="baz" />
           </div>
         );
       }
 
       it("validates input on blur event", () => {
         const wrapper = mount(<Form />);
-        wrapper.find("input.foo").simulate("blur");
-        expect(wrapper.find(".error")).to.have.lengthOf(1);
-        wrapper.find("input.foo").simulate("change", {target: {value: "foo"}});
-        expect(wrapper.find(".error")).to.have.lengthOf(0);
+        wrapper.find(".foo input").simulate("blur");
+        expect(wrapper.find(".foo .error")).to.have.lengthOf(1);
+        wrapper.find(".foo input").simulate("change", {target: {value: "foo"}});
+        expect(wrapper.find(".foo .error")).to.have.lengthOf(0);
+      });
+
+      it("validates complex paths (nested attributes)", () => {
+        const wrapper = mount(<Form />);
+        wrapper.find(".baz input").simulate("blur");
+        expect(wrapper.find(".baz .error")).to.have.lengthOf(1);
+        wrapper.find(".baz input").simulate("change", { target: { value: "baz" } });
+        expect(wrapper.find(".baz error")).to.have.lengthOf(0);
       });
     });
 
