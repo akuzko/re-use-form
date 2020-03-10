@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useForm } from './useForm';
 
 export default function makeForm(mainConfig) {
@@ -8,7 +8,11 @@ export default function makeForm(mainConfig) {
   function FormProvider({ config, children }) {
     const helpers = useForm(mainConfig, config);
 
-    helpers.useConfig(() => config, [config]);
+    useEffect(() => {
+      if (config) {
+        helpers._amendInitialConfig(config);
+      }
+    }, [config]);
 
     return (
       <Context.Provider value={helpers}>

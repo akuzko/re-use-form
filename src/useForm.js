@@ -6,6 +6,7 @@ import reducer, {
   setAttrs,
   addConfig,
   removeConfig,
+  amendInitialConfig,
   validate as doValidate,
   setError as doSetError,
   setErrors as doSetErrors,
@@ -82,6 +83,12 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     }, deps);
   };
 
+  const _amendInitialConfig = useCallback((config) => {
+    if (config !== secondaryConfig) {
+      dispatch(amendInitialConfig(resolveConfig(config)));
+    }
+  }, []);
+
   const formHelpers = {
     attrs,
     get,
@@ -98,7 +105,8 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     validate,
     withValidation,
     input,
-    $: input
+    $: input,
+    _amendInitialConfig
   };
 
   return helpers.reduce((hlp, fn) => ({ ...hlp, ...fn(hlp) }), formHelpers);

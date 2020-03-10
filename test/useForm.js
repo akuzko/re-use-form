@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { expect } from 'chai';
 import { mount } from 'enzyme';
 import sinon from 'sinon';
@@ -478,27 +478,39 @@ describe('useForm', () => {
       return <Input {...$(`items.${index}.name`)} className={`items-${index}`} />;
     }
 
-    it('validates inputs rendered via built helper hook, merging props config into a form one', () => {
-      const config = {
-        validations: {
-          'items.*.name': {
-            numericality: {
-              lessThan: 10
+    it('validates inputs rendered via built helper hook, merging props config into a form configs, correctly handling dynamic config', () => {
+      function Page() {
+        const [counter, setCounter] = useState(1);
+
+        const config = useMemo(() => ({
+          validations: {
+            'items.*.name': {
+              numericality: {
+                lessThan: 10
+              }
             }
-          }
-        },
-        helpers: () => ({
-          helperText: 'helper-text'
-        })
-      };
+          },
+          helpers: () => ({
+            helperText: `counter-${counter}`
+          })
+        }), [counter]);
 
-      const wrapper = mount(
-        <FormProvider config={config}>
-          <OrderForm />
-        </FormProvider>
-      );
+        return (
+          <div>
+            <FormProvider config={config}>
+              <OrderForm />
+            </FormProvider>
+            <button className="helper-increment" onClick={() => setCounter(counter + 1)}>Increment</button>
+          </div>
+        );
+      }
 
-      expect(wrapper.find('.helper-text').text()).to.eq('helper-text');
+      const wrapper = mount(<Page />);
+
+      expect(wrapper.find('.helper-text').text()).to.eq('counter-1');
+      wrapper.find('.helper-increment').simulate('click');
+      expect(wrapper.find('.helper-text').text()).to.eq('counter-2');
+
       expect(wrapper.find('.error')).to.have.lengthOf(0);
       wrapper.find('.validate').simulate('click');
       expect(wrapper.find('.username .error')).to.have.lengthOf(1);

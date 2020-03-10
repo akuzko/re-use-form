@@ -12,7 +12,7 @@ export default function reducer(state, action) {
       if (!action.resolvedConfig) return state;
 
       const nextConfigs = [...configs, action.resolvedConfig];
-      const { validations, validationOptions, validationDeps } = nextConfigs.reduce(mergeConfigs);
+      const { validations, validationOptions, validationDeps, helpers } = nextConfigs.reduce(mergeConfigs);
       let nextErrors = errors;
 
       if (shouldValidateOnChange) {
@@ -30,7 +30,8 @@ export default function reducer(state, action) {
         errors: nextErrors,
         validations,
         validationOptions,
-        validationDeps
+        validationDeps,
+        helpers
       };
     }
     case 'removeConfig': {
@@ -39,7 +40,7 @@ export default function reducer(state, action) {
       const index = configs.indexOf(action.resolvedConfig);
       const nextConfigs = [...configs];
       nextConfigs.splice(index, 1);
-      const { validations, validationOptions, validationDeps } = nextConfigs.reduce(mergeConfigs);
+      const { validations, validationOptions, validationDeps, helpers } = nextConfigs.reduce(mergeConfigs);
       let nextErrors = errors;
 
       if (shouldValidateOnChange) {
@@ -57,7 +58,25 @@ export default function reducer(state, action) {
         errors: nextErrors,
         validations,
         validationOptions,
-        validationDeps
+        validationDeps,
+        helpers
+      };
+    }
+    case 'amendInitialConfig': {
+      if (!action.resolvedConfig) return state;
+
+      const nextConfigs = [...configs];
+      nextConfigs[0] = mergeConfigs(nextConfigs[0], action.resolvedConfig);
+      nextConfigs[0].helpers = action.resolvedConfig.helpers;
+      const { validations, validationOptions, validationDeps, helpers } = nextConfigs.reduce(mergeConfigs);
+
+      return {
+        ...state,
+        configs: nextConfigs,
+        validations,
+        validationOptions,
+        validationDeps,
+        helpers
       };
     }
     case 'setAttr': {
@@ -197,6 +216,10 @@ export function addConfig(resolvedConfig) {
 
 export function removeConfig(resolvedConfig) {
   return { type: 'removeConfig', resolvedConfig };
+}
+
+export function amendInitialConfig(resolvedConfig) {
+  return { type: 'amendInitialConfig', resolvedConfig };
 }
 
 export function setAttr(path, value) {
