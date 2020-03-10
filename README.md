@@ -36,7 +36,7 @@ options.
 import { useForm } from 're-use-form';
 import { TextField, Select } from 'my-components/inputs';
 
-function MyForm({onSave}) {
+function MyForm({ onSave }) {
   const { input, attrs } = useForm(); // initializes form attributes with empty object.
 
   const save = () => onSave(attrs);
@@ -50,7 +50,7 @@ function MyForm({onSave}) {
       <TextField {...input('address.city')} label="City" />
       <TextField {...input('address.line')} label="Address" />
 
-      <button onClick={ save }>Submit</button>
+      <button onClick={save}>Submit</button>
     </>
   );
 }
@@ -290,7 +290,7 @@ function UserForm() {
       <TextField {...$('address.city')} label="City" />
       <TextField {...$('address.line')} label="Address" />
 
-      <button onClick={ save }>Submit</button>
+      <button onClick={save}>Submit</button>
     </>
   );
 }
@@ -313,7 +313,7 @@ For example:
 
 ```js
 function ItemForm() {
-  const {$} = useForm({
+  const { $ } = useForm({
     validations: {
       min: ['presence', 'numericality'],
       max: {
@@ -371,7 +371,7 @@ function OrderForm() {
         rules: [
           'presence',
           function(value, { name, attrs }) {
-            const index = +name.split(".")[1];
+            const index = +name.split('.')[1];
 
             if (value <= attrs.items[index].min) {
               return `Should be greated than ${attrs.items[index].min}`;
@@ -396,7 +396,7 @@ a callback and wraps it in validation routines. This callback will be called
 only if form had no errors:
 
 ```js
-const {$, withValidation} = useForm({
+const { $, withValidation } = useForm({
   validations: {
     name: 'presence'
   }
@@ -408,7 +408,7 @@ const save = withValidation((attrs) => {
 
 return (
   <>
-    <Input {...$("name")} />
+    <Input {...$('name')} />
     <button onClick={save}>Submit</button>
   </>
 );
@@ -438,7 +438,7 @@ function OrderForm() {
           <ItemForm key={i} usePartial={usePartial} index={i} />
         ))
       }
-      <button onClick={ validate }>Validate</button>
+      <button onClick={validate}>Validate</button>
     </div>
   );
 }
@@ -530,7 +530,7 @@ function ItemForm({ index }) {
 }
 
 function OrderEditor() {
-  const { t } = useTranslation("common");
+  const { t } = useTranslation('common');
   const config = useMemo(() => ({
     validations: {
       defaultOptions: { t }
@@ -565,9 +565,9 @@ with existing ones.
 
 ```js
 const [FormProvider, useOrderForm] = makeForm({
-  helpers: ({ attrs } => ({
+  helpers: ({ attrs }) => ({
     isNew: !!attrs.id
-  }))
+  })
 });
 ````
 
