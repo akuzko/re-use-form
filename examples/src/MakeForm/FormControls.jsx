@@ -18,7 +18,15 @@ export default function FormControls() {
   const reset = useCallback(() => doReset(), []);
 
   const handleSubmit = useCallback(withValidation((attrs) => {
-    fakeSubmit(attrs).catch(setErrors);
+    fakeSubmit(attrs).catch((errors) => {
+      setErrors(errors)
+        .then(() => {
+          for (const name in errors) {
+            // esling-disable-next-line no-console
+            console.log(`Error in input: ${name}`, document.querySelector(`[data-name='${name}'] .error`));
+          }
+        });
+    });
   }), []);
 
   return (

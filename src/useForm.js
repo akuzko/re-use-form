@@ -44,11 +44,19 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
 
   const getError = useCallback((name) => errors[name], [errors]);
 
-  const setError = useCallback((name, error) => dispatch(doSetError(name, error)), []);
+  const setError = useCallback((name, error) => {
+    return new Promise((resolve) => {
+      dispatch(doSetError(name, error));
+      resolve({ [name]: error });
+    });
+  }, []);
 
   const setErrors = useCallback((errors) => {
     if (errors && typeof errors === 'object' && errors.constructor === Object) {
-      return dispatch(doSetErrors(errors));
+      return new Promise((resolve) => {
+        dispatch(doSetErrors(errors));
+        resolve(errors);
+      });
     }
     throw errors;
   }, []);

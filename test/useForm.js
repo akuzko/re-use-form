@@ -385,6 +385,31 @@ describe('useForm', () => {
     });
   });
 
+  describe('setErrors', () => {
+    // eslint-disable-next-line react/prop-types
+    function Form({ onErrors }) {
+      const { $, setError } = useForm();
+
+      const setErrors = () => {
+        setError('foo', 'invalid').then(onErrors);
+      };
+
+      return (
+        <div>
+          <Input {...$('foo')} wrapperClassName="foo" />
+          <button onClick={setErrors} className="setErrors">Validate</button>
+        </div>
+      );
+    }
+
+    it('returns a promise that is resolved after errors are rendered', async () => {
+      let renderedError = null;
+      const wrapper = mount(<Form onErrors={() => renderedError = wrapper.find('.foo .error')} />);
+      await wrapper.find('.setErrors').simulate('click');
+      expect(renderedError).to.have.lengthOf(1);
+    });
+  });
+
   describe('form partials', () => {
     function OrderForm() {
       const { $, get, validate, usePartial } = useForm({

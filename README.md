@@ -661,8 +661,11 @@ export function Form() {
 - `set(attrs)` - when object is provided, sets multiple values at once.
   Each key in the object corresponds to input name, and values are input values.
 - `getError(name)` - returns validation error for an input with a given name.
-- `setErrors(errors)` - sets `errors` (object) as form's errors.
+- `setErrors(errors)` - sets `errors` (object) as form's errors. Returns a Promise
+  object that is resolved (with errors object) when errors are rendered.
 - `setError(name, error)` - sets an error for a single input with a given name.
+  Just like `setErrors`, returns a promise that is resolved with an errors object
+  with one key-value pair of input name and error message.
 - `dropError(name)` - drops error for a single input with a given name.
   Essentially calls `setError(name, undefined)`.
 - `isValid` - boolean flag indicating whether or not there are any errors
