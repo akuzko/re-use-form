@@ -555,6 +555,33 @@ merged into original config. The only dependency of resulting config object is
 the `config` from props, so make sure to memoize it to prevent unnecessary
 resolving on each render.
 
+### Controlled Form
+
+When using dedicated form hook, it is also possible to work with the form in
+a controlled fashion:
+
+```jsx
+function OrderEditor() {
+  const [attrs, setAttrs] = useState(initial);
+
+  const fillForm = useCallback(() => {
+    setAttrs({
+      username: 'Guest',
+      address: 'Home'
+    });
+  }, []);
+
+  return (
+    <>
+      <FormProvider attrs={attrs} onChange={onChange}>
+        <OrderForm />
+      </FormProvider>
+      <button onClick={fillForm}>Prefill form</button>
+    </>
+  );
+}
+```
+
 #### Additional Helpers
 
 In `makeForm` use-case scenarios there might also be a need in some additional

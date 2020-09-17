@@ -4,6 +4,7 @@ import reducer, {
   init,
   setAttr,
   setAttrs,
+  setFullAttrs,
   addConfig,
   removeConfig,
   amendInitialConfig,
@@ -19,7 +20,7 @@ import { resolveConfig, DEFAULT_CONFIG } from './config';
 
 export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
   const initial = useMemo(() => init(config, secondaryConfig), []);
-  const [{ attrs, errors, pureHandlers, helpers }, dispatch] = useReducer(reducer, initial);
+  const [{ attrs, errors, pureHandlers, helpers, action }, dispatch] = useReducer(reducer, initial);
   const isValid = !Object.values(errors).some(Boolean);
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
@@ -32,6 +33,11 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     } else {
       return dispatch(setAttr(pathOrAttrs, value));
     }
+  }, []);
+
+  // Used in a useEffect to apply external attributes to a form.
+  const setFormAttrs = useCallback((attrs) => {
+    return dispatch(setFullAttrs(attrs));
   }, []);
 
   const validate = useCallback((name) => {
@@ -101,6 +107,7 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     attrs,
     get,
     set,
+    setFormAttrs,
     errors,
     getError,
     setError,
@@ -114,7 +121,8 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     withValidation,
     input,
     $: input,
-    _amendInitialConfig
+    _amendInitialConfig,
+    _action: action
   };
 
   return helpers.reduce((hlp, fn) => ({ ...hlp, ...fn(hlp) }), formHelpers);

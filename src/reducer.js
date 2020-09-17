@@ -31,7 +31,8 @@ export default function reducer(state, action) {
         validations,
         validationOptions,
         validationDeps,
-        helpers
+        helpers,
+        action
       };
     }
     case 'removeConfig': {
@@ -59,7 +60,8 @@ export default function reducer(state, action) {
         validations,
         validationOptions,
         validationDeps,
-        helpers
+        helpers,
+        action
       };
     }
     case 'amendInitialConfig': {
@@ -76,7 +78,8 @@ export default function reducer(state, action) {
         validations,
         validationOptions,
         validationDeps,
-        helpers
+        helpers,
+        action
       };
     }
     case 'setAttr': {
@@ -106,10 +109,11 @@ export default function reducer(state, action) {
           errors: {
             ...errors,
             ...nextErrors
-          }
+          },
+          action
         };
       } else {
-        return update(state, `attrs.${path}`, value);
+        return update(state, { [`attrs.${path}`]: value, action });
       }
     }
     case 'setAttrs': {
@@ -131,7 +135,25 @@ export default function reducer(state, action) {
         }
       }
 
-      return { ...state, attrs: nextAttrs, errors: nextErrors };
+      return { ...state, attrs: nextAttrs, errors: nextErrors, action };
+    }
+    case 'setFullAttrs': {
+      const { attrs } = action;
+
+      if (shouldValidateOnChange) {
+        // When all attributes are set at once and validation should be
+        // executed on set, run all validation routines.
+        const nextErrors = {};
+        const fullOpts = { ...validationOptions, attrs };
+
+        Object.keys(validations).forEach((rule) => {
+          validateRule(validations, fullOpts, rule, nextErrors);
+        });
+
+        return { ...state, attrs, errors: nextErrors, action };
+      }
+
+      return { ...state, attrs, action };
     }
     case 'validate': {
       const { resolve, reject } = action;
@@ -152,7 +174,8 @@ export default function reducer(state, action) {
 
       return {
         ...state,
-        errors: nextErrors
+        errors: nextErrors,
+        action
       };
     }
     case 'validatePath': {
@@ -171,7 +194,8 @@ export default function reducer(state, action) {
         ...state,
         errors: {
           ...errors, [path]: error
-        }
+        },
+        action
       };
     }
     case 'setError': {
@@ -179,16 +203,17 @@ export default function reducer(state, action) {
 
       if (!error && !errors[name]) return state;
 
-      return { ...state, errors: { ...state.errors, [name]: error } };
+      return { ...state, errors: { ...state.errors, [name]: error, action } };
     }
     case 'setErrors': {
-      return { ...state, errors: action.errors };
+      return { ...state, errors: action.errors, action };
     }
     case 'reset': {
       return {
         ...state,
         errors: {},
-        attrs: action.attrs || state.initialAttrs
+        attrs: action.attrs || state.initialAttrs,
+        action
       };
     }
     default:
@@ -223,11 +248,15 @@ export function amendInitialConfig(resolvedConfig) {
 }
 
 export function setAttr(path, value) {
-  return { type: 'setAttr', path, value };
+  return { type: 'setAttr', path, value, isAttrUpdate: true };
 }
 
 export function setAttrs(attrs) {
-  return { type: 'setAttrs', attrs };
+  return { type: 'setAttrs', attrs, isAttrUpdate: true };
+}
+
+export function setFullAttrs(attrs) {
+  return { type: 'setFullAttrs', attrs };
 }
 
 export function validate(path, resolve, reject) {
@@ -247,5 +276,5 @@ export function setErrors(errors) {
 }
 
 export function reset(attrs) {
-  return { type: 'reset', attrs };
+  return { type: 'reset', attrs, isAttrUpdate: true };
 }

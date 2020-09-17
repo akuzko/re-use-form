@@ -561,4 +561,94 @@ describe('useForm', () => {
       expect(wrapper.find('.address .error')).to.have.lengthOf(1);
     });
   });
+
+  describe('controlled form', () => {
+    const [FormProvider, useOrderForm] = makeForm({
+      validations: {
+        'username': 'presence',
+        'address': 'presence',
+        'items.*.name': 'presence'
+      }
+    });
+
+    function OrderForm() {
+      const { $, validate, useConfig, attrs: { guest, items } } = useOrderForm();
+
+      useConfig(() => {
+        if (!guest) {
+          return {
+            validations: { address: 'presence' }
+          };
+        }
+      }, [guest]);
+
+      return (
+        <div>
+          <Input {...$('username')} className="username" />
+          <Input {...$('address')} className="address" />
+          <Checkbox {...$('guest')} className="guest" />
+          { items.map((item, i) => (
+              <ItemForm key={i} index={i} />
+            ))
+          }
+          <button onClick={validate} className="validate">Validate</button>
+        </div>
+      );
+    }
+
+    // eslint-disable-next-line react/prop-types
+    function ItemForm({ index }) {
+      const { $ } = useOrderForm();
+
+      return <Input {...$(`items.${index}.name`)} className={`items-${index}`} />;
+    }
+
+    it('has initial values from attrs, emits onChange and accepts attrs from elsewhere', () => {
+      function Page() {
+        const [attrs, setAttrs] = useState({
+          username: 'foo',
+          address: '',
+          guest: false,
+          items: [{}, {}]
+        });
+
+        const fillForm = () => {
+          setAttrs({
+            username: 'Guest',
+            address: '',
+            guest: true,
+            items: [{ name: 100 }]
+          });
+        };
+
+        const config = useMemo(() => ({
+          validations: {
+            'items.*.name': {
+              numericality: {
+                lessThan: 10
+              }
+            }
+          }
+        }), []);
+
+        return (
+          <div>
+            <FormProvider config={config} attrs={attrs} onChange={setAttrs}>
+              <OrderForm />
+            </FormProvider>
+            <button className="helper-fill" onClick={fillForm}>Fill form</button>
+          </div>
+        );
+      }
+
+      const wrapper = mount(<Page />);
+
+      expect(wrapper.find("input.username[value='foo']")).to.have.lengthOf(1);
+      wrapper.find('.validate').simulate('click');
+      wrapper.find('.helper-fill').simulate('click');
+
+      expect(wrapper.find('.address .error')).to.have.lengthOf(1);
+      expect(wrapper.find('.items-0 .error')).to.have.lengthOf(1);
+    });
+  });
 });
