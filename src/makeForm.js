@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useEffect, useRef } from 'react';
 import { useForm } from './useForm';
 
-export default function makeForm(mainConfig) {
+export default function makeForm(mainConfig = {}) {
   const Context = createContext({ attrs: mainConfig.initial });
 
   // eslint-disable-next-line react/prop-types
   function FormProvider({ config, children, attrs, onChange }) {
-    // eslint-disable-next-line react/prop-types
-    if (attrs && !config.initial) {
+    if (attrs && !mainConfig.initial) {
       mainConfig.initial = attrs;
     }
 
