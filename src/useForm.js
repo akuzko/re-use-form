@@ -20,7 +20,7 @@ import { resolveConfig, DEFAULT_CONFIG } from './config';
 
 export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
   const initial = useMemo(() => init(config, secondaryConfig), []);
-  const [{ attrs, errors, pureHandlers, helpers, action }, dispatch] = useReducer(reducer, initial);
+  const [{ attrs, errors, isPristine, pureHandlers, helpers, action }, dispatch] = useReducer(reducer, initial);
   const isValid = !Object.values(errors).some(Boolean);
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
@@ -107,6 +107,7 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     attrs,
     get,
     set,
+    isPristine,
     setFormAttrs,
     errors,
     getError,

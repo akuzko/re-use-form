@@ -5,7 +5,7 @@ import ItemForm from './ItemForm';
 import FormControls from './FormControls';
 
 export default function OrderForm() {
-  const { $, attrs, set, errors, getError, useConfig, isFreeDelivery } = useOrderForm();
+  const { $, attrs, isPristine, isValid, set, errors, getError, useConfig, isFreeDelivery } = useOrderForm();
   const { guest, items } = attrs;
 
   useConfig(() => {
@@ -51,6 +51,7 @@ export default function OrderForm() {
 
       <div>{ JSON.stringify(attrs) }</div>
       <div>{ JSON.stringify(errors) }</div>
+      <div>{ JSON.stringify({ isPristine, isValid }) }</div>
     </Fragment>
   );
 }

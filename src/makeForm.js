@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useForm } from './useForm';
 
 export default function makeForm(mainConfig = {}) {
@@ -10,7 +10,6 @@ export default function makeForm(mainConfig = {}) {
       mainConfig.initial = attrs;
     }
 
-    const skipSetFormAttrsRef = useRef(false);
     const helpers = useForm(mainConfig, config);
     const { attrs: formAttrs, setFormAttrs, _amendInitialConfig, _action } = helpers;
 
@@ -21,21 +20,13 @@ export default function makeForm(mainConfig = {}) {
     }, [config]);
 
     useEffect(() => {
-      if (_action?.isAttrUpdate && onChange) {
-        skipSetFormAttrsRef.current = true;
+      if (_action?.isAttrUpdate && onChange && !_action._processed) {
+        _action._processed = true;
         onChange(formAttrs);
+      } else if (attrs && attrs !== formAttrs) {
+        setFormAttrs(attrs);
       }
-    }, [formAttrs, _action, onChange]);
-
-    useEffect(() => {
-      if (attrs && attrs !== formAttrs) {
-        if (skipSetFormAttrsRef.current) {
-          skipSetFormAttrsRef.current = false;
-        } else {
-          setFormAttrs(attrs);
-        }
-      }
-    }, [attrs, formAttrs]);
+    }, [attrs, formAttrs, _action, onChange]);
 
     return (
       <Context.Provider value={helpers}>

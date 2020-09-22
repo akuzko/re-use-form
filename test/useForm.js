@@ -25,7 +25,7 @@ describe('useForm', () => {
   });
 
   function Form() {
-    const { $, isBar } = useForm({
+    const { $, reset, isBar, isPristine } = useForm({
       initial: { foo: 'foo' },
       helpers: ({ attrs }) => ({ isBar: attrs.foo === 'bar' })
     });
@@ -36,6 +36,8 @@ describe('useForm', () => {
         { isBar &&
           <div className="is-bar">{ 'value of "foo" is "bar"' }</div>
         }
+        <div className="is-pristine">{ isPristine.toString() }</div>
+        <button className="reset" onClick={() => reset()}>Reset</button>
       </div>
     );
   }
@@ -56,6 +58,15 @@ describe('useForm', () => {
     expect(wrapper.find('.is-bar')).to.have.lengthOf(0);
     wrapper.find('input.foo').simulate('change', { target: { value: 'bar' } });
     expect(wrapper.find('.is-bar')).to.have.lengthOf(1);
+  });
+
+  it('tracks pristine state', () => {
+    const wrapper = mount(<Form />);
+    expect(wrapper.find('.is-pristine').text()).to.eq('true');
+    wrapper.find('input.foo').simulate('change', { target: { value: 'bar' } });
+    expect(wrapper.find('.is-pristine').text()).to.eq('false');
+    wrapper.find('.reset').simulate('click');
+    expect(wrapper.find('.is-pristine').text()).to.eq('true');
   });
 
   describe('custom onChange handlers', () => {

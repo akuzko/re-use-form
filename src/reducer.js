@@ -110,10 +110,11 @@ export default function reducer(state, action) {
             ...errors,
             ...nextErrors
           },
+          isPristine: false,
           action
         };
       } else {
-        return update(state, { [`attrs.${path}`]: value, action });
+        return update(state, { [`attrs.${path}`]: value, isPristine: false, action });
       }
     }
     case 'setAttrs': {
@@ -135,7 +136,7 @@ export default function reducer(state, action) {
         }
       }
 
-      return { ...state, attrs: nextAttrs, errors: nextErrors, action };
+      return { ...state, attrs: nextAttrs, errors: nextErrors, isPristine: false, action };
     }
     case 'setFullAttrs': {
       const { attrs } = action;
@@ -150,10 +151,10 @@ export default function reducer(state, action) {
           validateRule(validations, fullOpts, rule, nextErrors);
         });
 
-        return { ...state, attrs, errors: nextErrors, action };
+        return { ...state, attrs, errors: nextErrors, isPristine: false, action };
       }
 
-      return { ...state, attrs, action };
+      return { ...state, attrs, isPristine: false, action };
     }
     case 'validate': {
       const { resolve, reject } = action;
@@ -213,6 +214,7 @@ export default function reducer(state, action) {
         ...state,
         errors: {},
         attrs: action.attrs || state.initialAttrs,
+        isPristine: true,
         action
       };
     }
@@ -231,6 +233,7 @@ export function init(config, secondaryConfig) {
     attrs,
     errors: {},
     configs: [fullConfig],
+    isPristine: true,
     ...fullConfig
   };
 }

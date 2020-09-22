@@ -13,9 +13,15 @@ function fakeSubmit() {
 }
 
 export default function FormControls() {
-  const { reset: doReset, isValid, validate, withValidation, setErrors, fillForm } = useOrderForm();
+  const { set, reset: doReset, isValid, validate, withValidation, setErrors, fillForm } = useOrderForm();
 
   const reset = useCallback(() => doReset(), []);
+
+  const randomizeName = useCallback(() => {
+    set({
+      username: `random-${(Math.random() * 1e6).toFixed(0)}`
+    });
+  }, [set]);
 
   const handleSubmit = useCallback(withValidation((attrs) => {
     fakeSubmit(attrs).catch((errors) => {
@@ -35,6 +41,7 @@ export default function FormControls() {
       <button onClick={reset}>Reset</button>
       <button onClick={validate}>Validate</button>
       <button onClick={fillForm}>Quick Fill</button>
+      <button onClick={randomizeName}>Randomize Name</button>
     </div>
   );
 }

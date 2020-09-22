@@ -697,6 +697,8 @@ export function Form() {
   Essentially calls `setError(name, undefined)`.
 - `isValid` - boolean flag indicating whether or not there are any errors
   currently set.
+- `isPristine` - boolean flag indicating whether or not form attributes were
+  changed. Gets back to `true` on `reset` helper call.
 - `validate()` - performs form validations. Return a promise-like object that
   responds to `then` and `catch` methods. On successful validation, resolves
   promise with form attributes. On failed validation, rejects promise with
