@@ -687,6 +687,9 @@ export function Form() {
 - `set(name, value)` - sets a `value` for an input with a specified `name`.
 - `set(attrs)` - when object is provided, sets multiple values at once.
   Each key in the object corresponds to input name, and values are input values.
+- `set(fn)` - uses `fn` to fetch updates. `fn` takes current form attributes
+  as only argument and should return object with updates to be assigned to the
+  form (just like when calling `set(attrs)`).
 - `getError(name)` - returns validation error for an input with a given name.
 - `setErrors(errors)` - sets `errors` (object) as form's errors. Returns a Promise
   object that is resolved (with errors object) when errors are rendered.

@@ -120,9 +120,10 @@ export default function reducer(state, action) {
     case 'setAttrs': {
       const nextAttrs = { ...attrs };
       const nextErrors = shouldValidateOnChange ? { ...errors } : errors;
+      const actionAttrs = typeof action.attrs === 'function' ? action.attrs(attrs) : action.attrs;
 
-      for (const path in action.attrs) {
-        update.in(nextAttrs, path, action.attrs[path]);
+      for (const path in actionAttrs) {
+        update.in(nextAttrs, path, actionAttrs[path]);
 
         if (shouldValidateOnChange) {
           const fullOpts = { ...validationOptions, attrs: nextAttrs };
@@ -132,7 +133,7 @@ export default function reducer(state, action) {
             depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors));
           }
 
-          nextErrors[path] = validateAttr(validations, fullOpts, path, action.attrs[path]);
+          nextErrors[path] = validateAttr(validations, fullOpts, path, actionAttrs[path]);
         }
       }
 

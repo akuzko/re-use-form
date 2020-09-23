@@ -106,6 +106,28 @@ describe('useForm', () => {
         expect(wrapper.find("input.bar[value='foobar']")).to.have.lengthOf(1);
       });
     });
+
+    describe('setting multiple values at once using updater function', () => {
+      function Form() {
+        const { $, set } = useForm({ initial: { foo: '', bar: '', baz: 'baz' } });
+
+        const changeFoo = value => set(attrs => ({ foo: value, bar: attrs.baz + 'bar' }));
+
+        return (
+          <div>
+            <Input {...$('foo', changeFoo)} className="foo" />
+            <Input {...$('bar')} className="bar" />
+          </div>
+        );
+      }
+
+      it('allows to set multiple values at once via custom onChange handler', () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('input.foo').simulate('change', { target: { value: 'foo' } });
+        expect(wrapper.find("input.foo[value='foo']")).to.have.lengthOf(1);
+        expect(wrapper.find("input.bar[value='bazbar']")).to.have.lengthOf(1);
+      });
+    });
   });
 
   describe('validations', () => {
