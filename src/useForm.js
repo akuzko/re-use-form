@@ -69,7 +69,7 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
 
   const dropError = useCallback(name => dispatch(doSetError(name, undefined)), []);
 
-  const reset = useCallback((attrs) => dispatch(doReset(attrs)), []);
+  const reset = useCallback((attrsOrFn) => dispatch(doReset(attrsOrFn)), []);
 
   const withValidation = (callback) => () => validate().then(callback);
 

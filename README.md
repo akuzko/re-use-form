@@ -713,8 +713,12 @@ export function Form() {
   object containing single key-value corresponding to input name and error.
 - `withValidation(callback)` - returns a function that performs form validation
   and executes a callback if there were no errors.
-- `reset([attrs])` - clears form errors and sets form attributes provided value.
+- `reset([attrsOrFn])` - clears form errors and sets form attributes provided value.
   If no value provided, uses object that was passed to initial `useForm` hook call.
+  If function is provided, current form attributes are passed as the only function
+  argument and it is expected to return full object of attributes to be set (unlike
+  `set` method that should return object of updates in similar case). One can use
+  this behavior to amend "clean" form attributes without affecting it's pristine state.
 - `usePartial(config)` - helper hook used to define form partials.
 
 ### More Convenient Usage

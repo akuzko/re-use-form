@@ -33,11 +33,13 @@ describe('useForm', () => {
     return (
       <div>
         <Input {...$('foo')} className="foo" />
+        <Input {...$('bar')} className="bar" />
         { isBar &&
           <div className="is-bar">{ 'value of "foo" is "bar"' }</div>
         }
         <div className="is-pristine">{ isPristine.toString() }</div>
         <button className="reset" onClick={() => reset()}>Reset</button>
+        <button className="resetFn" onClick={() => reset((attrs) => ({ ...attrs, bar: 'bar' }))}>Reset with Fn</button>
       </div>
     );
   }
@@ -66,6 +68,10 @@ describe('useForm', () => {
     wrapper.find('input.foo').simulate('change', { target: { value: 'bar' } });
     expect(wrapper.find('.is-pristine').text()).to.eq('false');
     wrapper.find('.reset').simulate('click');
+    expect(wrapper.find('.is-pristine').text()).to.eq('true');
+    wrapper.find('.resetFn').simulate('click');
+    expect(wrapper.find("input.foo[value='foo']")).to.have.lengthOf(1);
+    expect(wrapper.find("input.bar[value='bar']")).to.have.lengthOf(1);
     expect(wrapper.find('.is-pristine').text()).to.eq('true');
   });
 

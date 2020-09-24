@@ -211,10 +211,13 @@ export default function reducer(state, action) {
       return { ...state, errors: action.errors, action };
     }
     case 'reset': {
+      const actionAttrs = action.attrs || state.initialAttrs;
+      const nextAttrs = typeof actionAttrs === 'function' ? actionAttrs(attrs) : actionAttrs;
+
       return {
         ...state,
         errors: {},
-        attrs: action.attrs || state.initialAttrs,
+        attrs: nextAttrs,
         isPristine: true,
         action
       };
