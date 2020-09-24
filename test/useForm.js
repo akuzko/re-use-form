@@ -503,14 +503,19 @@ describe('useForm', () => {
 
     // eslint-disable-next-line react/prop-types
     function ItemForm({ usePartial, index }) {
-      const { $ } = usePartial({
+      const { $, getError } = usePartial({
         prefix: `items.${index}`,
         validations: {
           name: 'presence'
         }
       });
 
-      return <Input {...$('name')} className={`items-${index}`} />;
+      return (
+        <>
+          <Input {...$('name')} className={`items-${index}`} />
+          <div className={`items-${index}-name-error`}>{ getError('name') }</div>
+        </>
+      );
     }
 
     it('validates inputs rendered via `usePartial` helper', () => {
@@ -521,6 +526,8 @@ describe('useForm', () => {
       expect(wrapper.find('.username .error')).to.have.lengthOf(1);
       expect(wrapper.find('.items-0 .error')).to.have.lengthOf(1);
       expect(wrapper.find('.items-1 .error')).to.have.lengthOf(1);
+
+      expect(wrapper.find('.items-1-name-error').text()).to.eq("Can't be empty");
     });
   });
 

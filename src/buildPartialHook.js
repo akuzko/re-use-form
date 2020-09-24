@@ -49,7 +49,7 @@ export default function buildPartialHook({
       }
     }, []);
 
-    const getError = useCallback(path => formGetError(`${prefix}.${path}`), []);
+    const getError = useCallback(path => formGetError(`${prefix}.${path}`), [formGetError]);
 
     const input = (path, onChange) => formInput(`${prefix}.${path}`, onChange);
 
