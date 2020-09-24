@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { Input } from '../inputs';
 
@@ -9,7 +9,7 @@ ItemForm.propTypes = {
 };
 
 export default function ItemForm({ index, usePartial, onRemove }) {
-  const { $ } = usePartial({
+  const { $, set } = usePartial({
     prefix: `items.${index}`,
     validations: {
       id: 'presence',
@@ -27,10 +27,18 @@ export default function ItemForm({ index, usePartial, onRemove }) {
     }
   });
 
+  const changeId = useCallback((id) => {
+    set((attrs) => {
+      if (+attrs.count > 100) return attrs;
+
+      return { id, count: '' };
+    });
+  }, []);
+
   return (
     <div>
       <div>
-        <Input {...$('id')} placeholder="Item ID" />
+        <Input {...$('id', changeId)} placeholder="Item ID" />
       </div>
       <div>
         <Input {...$('count')} placeholder="Item Count" />

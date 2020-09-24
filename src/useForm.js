@@ -28,11 +28,11 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
 
   const get = useCallback(name => name ? getValue(attrs, name) : attrs, [attrs]);
 
-  const set = useCallback((pathOrAttrsOrFn, value) => {
+  const set = useCallback((pathOrAttrsOrFn, valueOrPrefix) => {
     if (typeof pathOrAttrsOrFn === 'function' || typeof pathOrAttrsOrFn === 'object') {
-      return dispatch(setAttrs(pathOrAttrsOrFn));
+      return dispatch(setAttrs(pathOrAttrsOrFn, valueOrPrefix));
     } else {
-      return dispatch(setAttr(pathOrAttrsOrFn, value));
+      return dispatch(setAttr(pathOrAttrsOrFn, valueOrPrefix));
     }
   }, []);
 

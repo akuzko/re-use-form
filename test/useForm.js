@@ -503,16 +503,30 @@ describe('useForm', () => {
 
     // eslint-disable-next-line react/prop-types
     function ItemForm({ usePartial, index }) {
-      const { $, getError } = usePartial({
+      const { $, getError, set } = usePartial({
         prefix: `items.${index}`,
         validations: {
-          name: 'presence'
+          name: 'presence',
+          amount: 'presence'
         }
       });
 
+      const changeAmount = (amount) => {
+        set((attrs) => {
+          if (attrs.name === 'foo') {
+            return { amount: (+amount * 2).toString() };
+          } else if (amount === '100') {
+            return { name: '', amount };
+          } else {
+            return { amount };
+          }
+        });
+      };
+
       return (
         <>
-          <Input {...$('name')} className={`items-${index}`} />
+          <Input {...$('name')} className={`items-${index}-name`} />
+          <Input {...$('amount', changeAmount)} className={`items-${index}-amount`} />
           <div className={`items-${index}-name-error`}>{ getError('name') }</div>
         </>
       );
@@ -524,10 +538,23 @@ describe('useForm', () => {
       expect(wrapper.find('.error')).to.have.lengthOf(0);
       wrapper.find('.validate').simulate('click');
       expect(wrapper.find('.username .error')).to.have.lengthOf(1);
-      expect(wrapper.find('.items-0 .error')).to.have.lengthOf(1);
-      expect(wrapper.find('.items-1 .error')).to.have.lengthOf(1);
+      expect(wrapper.find('.items-0-name .error')).to.have.lengthOf(1);
+      expect(wrapper.find('.items-1-name .error')).to.have.lengthOf(1);
 
       expect(wrapper.find('.items-1-name-error').text()).to.eq("Can't be empty");
+    });
+
+    it('allows to use setter function in partial set', () => {
+      const wrapper = mount(<OrderForm />);
+
+      wrapper.find('.validate').simulate('click');
+      wrapper.find('input.items-0-name').simulate('change', { target: { value: 'foo' } });
+      wrapper.find('input.items-0-amount').simulate('change', { target: { value: '2' } });
+      expect(wrapper.find("input.items-0-amount[value='4']")).to.have.lengthOf(1);
+      wrapper.find('input.items-0-name').simulate('change', { target: { value: 'bar' } });
+      wrapper.find('input.items-0-amount').simulate('change', { target: { value: '100' } });
+      expect(wrapper.find('.items-0-name .error')).to.have.lengthOf(1);
+      expect(wrapper.find('.items-0-name-error').text()).to.eq("Can't be empty");
     });
   });
 

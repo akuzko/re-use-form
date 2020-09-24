@@ -35,17 +35,11 @@ export default function buildPartialHook({
 
     const get = useCallback(path => path ? formGet(`${prefix}.${path}`) : formGet(prefix), [attrs]);
 
-    const set = useCallback((pathOrAttrs, value) => {
-      if (typeof pathOrAttrs === 'object') {
-        const partialObj = {};
-
-        for (const key in pathOrAttrs) {
-          partialObj[`${prefix}.${key}`] = pathOrAttrs[key];
-        }
-
-        return formSet(partialObj);
+    const set = useCallback((pathOrAttrsOrFn, value) => {
+      if (typeof pathOrAttrsOrFn === 'string') {
+        return formSet(`${prefix}.${pathOrAttrsOrFn}`, value);
       } else {
-        return formSet(`${prefix}.${pathOrAttrs}`, value);
+        return formSet(pathOrAttrsOrFn, prefix);
       }
     }, []);
 

@@ -118,22 +118,26 @@ export default function reducer(state, action) {
       }
     }
     case 'setAttrs': {
+      const { attrs: actionAttrs, prefix } = action;
       const nextAttrs = { ...attrs };
       const nextErrors = shouldValidateOnChange ? { ...errors } : errors;
-      const actionAttrs = typeof action.attrs === 'function' ? action.attrs(attrs) : action.attrs;
+      const attrsObj = prefix ? get(attrs, prefix) : attrs;
+      const actionAttrsObj = typeof actionAttrs === 'function' ? actionAttrs(attrsObj) : actionAttrs;
 
-      for (const path in actionAttrs) {
-        update.in(nextAttrs, path, actionAttrs[path]);
+      for (const path in actionAttrsObj) {
+        const fullPath = prefix ? `${prefix}.${path}` : path;
+
+        update.in(nextAttrs, fullPath, actionAttrsObj[path]);
 
         if (shouldValidateOnChange) {
           const fullOpts = { ...validationOptions, attrs: nextAttrs };
-          const depsToValidate = validationDeps[path] || validationDeps[wildcard(path)];
+          const depsToValidate = validationDeps[fullPath] || validationDeps[wildcard(fullPath)];
 
           if (depsToValidate) {
             depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors));
           }
 
-          nextErrors[path] = validateAttr(validations, fullOpts, path, actionAttrs[path]);
+          nextErrors[fullPath] = validateAttr(validations, fullOpts, fullPath, actionAttrsObj[path]);
         }
       }
 
@@ -269,8 +273,8 @@ export function setAttr(path, value) {
   return { type: 'setAttr', path, value, isAttrUpdate: true };
 }
 
-export function setAttrs(attrs) {
-  return { type: 'setAttrs', attrs, isAttrUpdate: true };
+export function setAttrs(attrs, prefix) {
+  return { type: 'setAttrs', attrs, prefix, isAttrUpdate: true };
 }
 
 export function setFullAttrs(attrs) {

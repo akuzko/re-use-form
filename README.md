@@ -476,6 +476,10 @@ specified, since partial's validation might depend on "root" form attributes.
 Also note that "Dedicated Form Hook" feature bellow, which appeared later than
 form partials, might provide even more convenient form usage and code organization.
 
+When called, `usePartial` hook returns object with following properties:
+`attrs`, `get`, `set`, `getError`, `input`, `$` (alias of `input`). All of them
+are "scoped" to prefix of the partial and have similar behavior in terms of usage.
+
 ### Dedicated Form Hook
 
 It is also possible to define a form hook that can be available in any of your
