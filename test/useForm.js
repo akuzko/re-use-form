@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { expect } from 'chai';
 import { mount } from 'enzyme';
 import sinon from 'sinon';
@@ -133,6 +133,37 @@ describe('useForm', () => {
         expect(wrapper.find("input.foo[value='foo']")).to.have.lengthOf(1);
         expect(wrapper.find("input.bar[value='bazbar']")).to.have.lengthOf(1);
       });
+    });
+  });
+
+  describe('setState', () => {
+    function Form() {
+      const { $, setState, isPristine } = useForm({ initial: { foo: '', bar: '' } });
+
+      useEffect(() => {
+        setState((state) => {
+          return {
+            ...state,
+            attrs: { foo: 'foo', bar: 'bar' },
+            isPristine: true
+          };
+        });
+      }, []);
+
+      return (
+        <div>
+          <Input {...$('foo')} className="foo" />
+          <Input {...$('bar')} className="bar" />
+          <div className="is-pristine">{ isPristine.toString() }</div>
+        </div>
+      );
+    }
+
+    it('allows to update form internal state', () => {
+      const wrapper = mount(<Form />);
+      expect(wrapper.find("input.foo[value='foo']")).to.have.lengthOf(1);
+      expect(wrapper.find("input.bar[value='bar']")).to.have.lengthOf(1);
+      expect(wrapper.find('.is-pristine').text()).to.eq('true');
     });
   });
 

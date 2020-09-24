@@ -11,7 +11,8 @@ import reducer, {
   validate as doValidate,
   setError as doSetError,
   setErrors as doSetErrors,
-  reset as doReset
+  reset as doReset,
+  setState as doSetState
 } from './reducer';
 import { ValidationPromise } from './validations';
 import buildPartialHook from './buildPartialHook';
@@ -71,6 +72,8 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
 
   const reset = useCallback((attrsOrFn) => dispatch(doReset(attrsOrFn)), []);
 
+  const setState = useCallback((setter) => dispatch(doSetState(setter)), []);
+
   const withValidation = (callback) => () => validate().then(callback);
 
   const defaultOnChange = useCallback((value, { name }) => set(name, value), []);
@@ -116,6 +119,7 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     dropError,
     isValid,
     reset,
+    setState,
     usePartial,
     useConfig,
     validate,

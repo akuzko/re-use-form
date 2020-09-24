@@ -720,6 +720,9 @@ export function Form() {
   `set` method that should return object of updates in similar case). One can use
   this behavior to amend "clean" form attributes without affecting it's pristine state.
 - `usePartial(config)` - helper hook used to define form partials.
+- `setState(fn)` - helper hook that allows update form internal state. `fn` takes
+  current form state as it's only argument and should return new complete form
+  state. For advanced usage only.
 
 ### More Convenient Usage
 

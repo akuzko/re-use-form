@@ -222,6 +222,17 @@ export default function reducer(state, action) {
         action
       };
     }
+    case 'setState': {
+      const { setter } = action;
+      const nextState = setter(state);
+
+      action.isAttrUpdate = attrs !== nextState.attrs;
+
+      return {
+        ...nextState,
+        action
+      };
+    }
     default:
       throw new Error(`unrecognized action ${action.type}`);
   }
@@ -284,4 +295,8 @@ export function setErrors(errors) {
 
 export function reset(attrs) {
   return { type: 'reset', attrs, isAttrUpdate: true };
+}
+
+export function setState(setter) {
+  return { type: 'setState', setter };
 }
