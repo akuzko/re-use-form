@@ -1,4 +1,4 @@
-import { validateAttr, validateRule, wildcard } from './validations';
+import { validateAttr, validateRule, wildcard, compact } from './validations';
 import { resolveConfig, mergeConfigs } from './config';
 import update from 'update-js';
 import get from 'get-lookup';
@@ -43,7 +43,7 @@ export default function reducer(state, action) {
       return {
         ...state,
         configs: nextConfigs,
-        errors: nextErrors,
+        errors: compact(nextErrors),
         validations,
         validationOptions,
         validationDeps,
@@ -72,7 +72,7 @@ export default function reducer(state, action) {
       return {
         ...state,
         configs: nextConfigs,
-        errors: nextErrors,
+        errors: compact(nextErrors),
         validations,
         validationOptions,
         validationDeps,
@@ -123,10 +123,10 @@ export default function reducer(state, action) {
         return {
           ...state,
           attrs: nextAttrs,
-          errors: {
+          errors: compact({
             ...errors,
             ...nextErrors
-          },
+          }),
           isPristine: false,
           action
         };
@@ -158,7 +158,7 @@ export default function reducer(state, action) {
         }
       }
 
-      return { ...state, attrs: nextAttrs, errors: nextErrors, isPristine: false, action };
+      return { ...state, attrs: nextAttrs, errors: compact(nextErrors), isPristine: false, action };
     }
     case 'setFullAttrs': {
       const { attrs } = action;
@@ -173,7 +173,7 @@ export default function reducer(state, action) {
           validateRule(validations, fullOpts, rule, nextErrors, justDropError);
         });
 
-        return { ...state, attrs, errors: nextErrors, isPristine: false, action };
+        return { ...state, attrs, errors: compact(nextErrors), isPristine: false, action };
       }
 
       return { ...state, attrs, isPristine: false, action };
@@ -197,7 +197,7 @@ export default function reducer(state, action) {
 
       return {
         ...state,
-        errors: nextErrors,
+        errors: compact(nextErrors),
         isValidated: true,
         action
       };
@@ -216,9 +216,9 @@ export default function reducer(state, action) {
 
       return {
         ...state,
-        errors: {
+        errors: compact({
           ...errors, [path]: error
-        },
+        }),
         action
       };
     }
@@ -227,10 +227,10 @@ export default function reducer(state, action) {
 
       if (!error && !errors[name]) return state;
 
-      return { ...state, errors: { ...state.errors, [name]: error, action } };
+      return { ...state, errors: compact({ ...state.errors, [name]: error, action }) };
     }
     case 'setErrors': {
-      return { ...state, errors: action.errors, action };
+      return { ...state, errors: compact(action.errors), action };
     }
     case 'reset': {
       const actionAttrs = action.attrs || state.initialAttrs;

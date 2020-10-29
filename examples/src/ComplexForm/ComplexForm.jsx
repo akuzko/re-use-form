@@ -10,10 +10,10 @@ const initialForm = {
 };
 
 export default function ComplexForm() {
-  const { $, get, set, getError, reset: doReset, validate, usePartial } = useForm({
+  const { $, get, set, getError, errors, reset: doReset, validate, usePartial } = useForm({
     initial: initialForm,
     validations: {
-      onChangeStrategy: 'none',
+      onChangeStrategy: 'onAfterValidate',
       username: {
         presence: true,
         format: {
@@ -67,6 +67,7 @@ export default function ComplexForm() {
       </div>
 
       <div>{ JSON.stringify(get()) }</div>
+      <div>{ JSON.stringify(errors) }</div>
     </>
   );
 }

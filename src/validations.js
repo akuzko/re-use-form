@@ -87,6 +87,18 @@ export function wildcard(name) {
   return name.replace(/\d+/g, '*');
 }
 
+export function compact(errorsObject) {
+  const errors = {};
+
+  for (const key in errorsObject) {
+    if (errorsObject[key]) {
+      errors[key] = errorsObject[key];
+    }
+  }
+
+  return errors;
+}
+
 export class ValidationPromise {
   constructor(fn) {
     this.promise = new Promise(fn)
