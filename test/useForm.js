@@ -168,12 +168,16 @@ describe('useForm', () => {
   });
 
   describe('validations', () => {
-    function Form() {
-      const { $, validate } = useForm({
+    // eslint-disable-next-line react/prop-types
+    function Form({ validationStrategy = 'onAnyError' }) {
+      const { $, validate, setError } = useForm({
         initial: { foo: '' },
         validations: {
-          foo: 'presence',
-          bar: 'presence'
+          rules: {
+            foo: 'presence',
+            bar: 'presence'
+          },
+          onChangeStrategy: validationStrategy
         }
       });
 
@@ -182,6 +186,7 @@ describe('useForm', () => {
           <Input {...$('foo')} wrapperClassName="foo" />
           <Input {...$('bar')} wrapperClassName="bar" />
           <button onClick={() => validate()} className="validate">Validate</button>
+          <button onClick={() => setError('bar', 'invalid')} className="setBarError">Set error on bar</button>
         </div>
       );
     }
@@ -191,23 +196,6 @@ describe('useForm', () => {
       expect(wrapper.find('.error')).to.have.lengthOf(0);
       wrapper.find('.validate').simulate('click');
       expect(wrapper.find('.error')).to.have.lengthOf(2);
-    });
-
-    it('does not initially validate input on change', () => {
-      const wrapper = mount(<Form />);
-      wrapper.find('.foo input').simulate('change', { target: { value: '' } });
-      expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
-    });
-
-    it('validates input on change if there are any errors on the form', () => {
-      const wrapper = mount(<Form />);
-      wrapper.find('.foo input').simulate('change', { target: { value: '' } });
-      wrapper.find('.validate').simulate('click');
-      expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
-      wrapper.find('.foo input').simulate('change', { target: { value: '1' } });
-      expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
-      wrapper.find('.foo input').simulate('change', { target: { value: '' } });
-      expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
     });
 
     describe('validation and custom onChange handler', () => {
@@ -451,6 +439,62 @@ describe('useForm', () => {
             setTimeout(resolve, 10);
           });
         }
+      });
+    });
+
+    describe('onChange validation strategy', () => {
+      describe('onAnyError (default)', () => {
+        it('does not initially validate input on change', () => {
+          const wrapper = mount(<Form />);
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
+        });
+
+        it('validates input on change if there are any errors on the form', () => {
+          const wrapper = mount(<Form />);
+          wrapper.find('.validate').simulate('click');
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
+          wrapper.find('.foo input').simulate('change', { target: { value: '1' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
+
+          wrapper.find('.foo input').simulate('change', { target: { value: '1' } });
+          wrapper.find('.bar input').simulate('change', { target: { value: '1' } });
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
+        });
+      });
+
+      describe('onAfterValidate', () => {
+        it('does not initially validate input on change', () => {
+          const wrapper = mount(<Form />);
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
+        });
+
+        it('validates input on change after validation helper call', () => {
+          const wrapper = mount(<Form validationStrategy="onAfterValidate" />);
+          wrapper.find('.setBarError').simulate('click');
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
+          wrapper.find('.bar input').simulate('change', { target: { value: '1' } });
+          expect(wrapper.find('.bar .error')).to.have.lengthOf(0);
+          wrapper.find('.bar input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.bar .error')).to.have.lengthOf(0);
+
+          wrapper.find('.validate').simulate('click');
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
+          expect(wrapper.find('.bar .error')).to.have.lengthOf(1);
+
+          wrapper.find('.foo input').simulate('change', { target: { value: '1' } });
+          wrapper.find('.bar input').simulate('change', { target: { value: '1' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(0);
+          expect(wrapper.find('.bar .error')).to.have.lengthOf(0);
+
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
+        });
       });
     });
   });

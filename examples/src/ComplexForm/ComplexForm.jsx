@@ -13,6 +13,7 @@ export default function ComplexForm() {
   const { $, get, set, getError, reset: doReset, validate, usePartial } = useForm({
     initial: initialForm,
     validations: {
+      onChangeStrategy: 'none',
       username: {
         presence: true,
         format: {

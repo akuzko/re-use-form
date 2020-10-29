@@ -414,6 +414,33 @@ return (
 );
 ```
 
+#### Validation onChange strategy
+
+By default, form will validate input values onChange only if there are any
+errors rendered on the form. This might not be the most suitable behavior
+in some cases. To specify other behavior one can use `onChangeStrategy`
+validation configuration option:
+
+```js
+const { $ } = useForm({
+  validations: {
+    onChangeStrategy: 'onAfterValidate',
+    rules: {
+      username: 'presence'
+    }
+  }
+});
+```
+
+Following strategies are supported:
+- `'onAnyError'` - default one. Will validate inputs on change only if form
+  has any errors.
+- `'onAfterValidate'` - form will validate values on change only if `validate`
+  helper has been called. This flag is set to initial `false` value after
+  `reset` helper call.
+- `'none'` - form will not validate inputs on change, but **will** drop any
+  errors rendered on this input on change.
+
 ### Form Partials (`usePartial` Helper Hook)
 
 One of the features of `re-use-form` package is that it's `useForm` hook also

@@ -10,9 +10,15 @@ export function resolveConfig(config) {
 
   const validationOptions = {};
   let validationsConfig = config.validations || {};
+  let validationStrategy = 'onAnyError';
 
-  if ('defaultOptions' in validationsConfig) {
-    Object.assign(validationOptions, validationsConfig.defaultOptions);
+  if ('defaultOptions' in validationsConfig || 'onChangeStrategy' in validationsConfig) {
+    if (validationsConfig.defaultOptions) {
+      Object.assign(validationOptions, validationsConfig.defaultOptions);
+    }
+    if (validationsConfig.onChangeStrategy) {
+      validationStrategy = validationsConfig.onChangeStrategy;
+    }
     validationsConfig = validationsConfig.rules;
   }
 
@@ -24,6 +30,7 @@ export function resolveConfig(config) {
     validationOptions,
     validations,
     validationDeps,
+    validationStrategy,
     helpers: config.helpers ? [config.helpers] : []
   };
 }
@@ -90,6 +97,7 @@ export function mergeConfigs(config1, config2) {
     validationOptions: mergeValidationOptions(resConfig1.validationOptions, resConfig2.validationOptions),
     validations: mergeValidations(resConfig1.validations, resConfig2.validations),
     validationDeps: mergeValidationDeps(resConfig1.validationDeps, resConfig2.validationDeps),
+    validationStrategy: config2.validationStrategy || config1.validationStrategy,
     helpers: [...resConfig1.helpers, ...resConfig2.helpers]
   };
 }

@@ -4,8 +4,24 @@ import update from 'update-js';
 import get from 'get-lookup';
 
 export default function reducer(state, action) {
-  const { attrs, errors, validations, validationOptions, validationDeps, configs } = state;
-  const shouldValidateOnChange = Object.values(errors).some(Boolean);
+  const { attrs, errors, validations, validationOptions, validationDeps, validationStrategy, isValidated, configs } = state;
+  // const shouldValidateOnChange = Object.values(errors).some(Boolean);
+  let shouldValidateOnChange = false;
+  let justDropError = false;
+
+  if (validationStrategy === 'onAnyError') {
+    shouldValidateOnChange = Object.values(errors).some(Boolean);
+  } else if (validationStrategy === 'onAfterValidate') {
+    shouldValidateOnChange = isValidated;
+
+    if (!isValidated) {
+      justDropError = true;
+    }
+  } else if (validationStrategy === 'none') {
+    justDropError = true;
+  } else {
+    throw new Error(`Invalid validate on change validation strategy '${validationStrategy}'`);
+  }
 
   switch (action.type) {
     case 'addConfig': {
@@ -70,7 +86,7 @@ export default function reducer(state, action) {
       const nextConfigs = [...configs];
       nextConfigs[0] = mergeConfigs(nextConfigs[0], action.resolvedConfig);
       nextConfigs[0].helpers = action.resolvedConfig.helpers;
-      const { validations, validationOptions, validationDeps, helpers } = nextConfigs.reduce(mergeConfigs);
+      const { validations, validationOptions, validationDeps, validationStrategy, helpers } = nextConfigs.reduce(mergeConfigs);
 
       return {
         ...state,
@@ -78,6 +94,7 @@ export default function reducer(state, action) {
         validations,
         validationOptions,
         validationDeps,
+        validationStrategy,
         helpers,
         action
       };
@@ -85,20 +102,20 @@ export default function reducer(state, action) {
     case 'setAttr': {
       const { path, value } = action;
 
-      if (shouldValidateOnChange || errors[path]) {
+      if (shouldValidateOnChange || justDropError) {
         const nextAttrs = update(attrs, path, value);
         const fullOpts = { ...validationOptions, attrs: nextAttrs };
-        const nextErrors = { [path]: validateAttr(validations, fullOpts, path, value) };
+        const nextErrors = { [path]: validateAttr(validations, fullOpts, path, value, justDropError) };
         const depsToValidate = validationDeps[path] || validationDeps[wildcard(path)];
 
         if (depsToValidate) {
-          depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors));
+          depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors, justDropError));
         }
 
         if (Array.isArray(value)) {
           Object.keys(validations).forEach((rule) => {
             if (rule !== path && rule.startsWith(path)) {
-              validateRule(validations, fullOpts, rule, nextErrors);
+              validateRule(validations, fullOpts, rule, nextErrors, justDropError);
             }
           });
         }
@@ -129,15 +146,15 @@ export default function reducer(state, action) {
 
         update.in(nextAttrs, fullPath, actionAttrsObj[path]);
 
-        if (shouldValidateOnChange) {
+        if (shouldValidateOnChange || justDropError) {
           const fullOpts = { ...validationOptions, attrs: nextAttrs };
           const depsToValidate = validationDeps[fullPath] || validationDeps[wildcard(fullPath)];
 
           if (depsToValidate) {
-            depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors));
+            depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors, justDropError));
           }
 
-          nextErrors[fullPath] = validateAttr(validations, fullOpts, fullPath, actionAttrsObj[path]);
+          nextErrors[fullPath] = validateAttr(validations, fullOpts, fullPath, actionAttrsObj[path], justDropError);
         }
       }
 
@@ -153,7 +170,7 @@ export default function reducer(state, action) {
         const fullOpts = { ...validationOptions, attrs };
 
         Object.keys(validations).forEach((rule) => {
-          validateRule(validations, fullOpts, rule, nextErrors);
+          validateRule(validations, fullOpts, rule, nextErrors, justDropError);
         });
 
         return { ...state, attrs, errors: nextErrors, isPristine: false, action };
@@ -181,6 +198,7 @@ export default function reducer(state, action) {
       return {
         ...state,
         errors: nextErrors,
+        isValidated: true,
         action
       };
     }
@@ -223,6 +241,7 @@ export default function reducer(state, action) {
         errors: {},
         attrs: nextAttrs,
         isPristine: true,
+        isValidated: false,
         action
       };
     }
@@ -253,6 +272,7 @@ export function init(config, secondaryConfig) {
     errors: {},
     configs: [fullConfig],
     isPristine: true,
+    isValidated: false,
     ...fullConfig
   };
 }

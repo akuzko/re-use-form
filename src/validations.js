@@ -6,34 +6,37 @@ export function defValidation(name, ruleFn) {
   validationRules[name] = ruleFn;
 }
 
-export function validateAttr(validations, options, name, value) {
-  return callValueValidator(validations, options, name, value);
+export function validateAttr(validations, options, name, value, justDropError) {
+  return callValueValidator(validations, options, name, value, justDropError);
 }
 
-export function validateRule(validations, options, name, errors) {
+export function validateRule(validations, options, name, errors, justDropError) {
   if (name.includes('*')) {
-    callEachValidator(validations, options, name, errors);
+    callEachValidator(validations, options, name, errors, justDropError);
   } else {
-    errors[name] = callValueValidator(validations, options, name, get(options.attrs, name));
+    errors[name] = callValueValidator(validations, options, name, get(options.attrs, name), justDropError);
   }
 }
 
-function callEachValidator(validations, options, name, errors) {
+function callEachValidator(validations, options, name, errors, justDropError) {
   const match = name.match(/^([^*]+)\.\*(.+)?$/);
   const [collectionName, rest = ''] = match.slice(1);
 
   (get(options.attrs, collectionName) || []).forEach((_item, i) => {
-    validateRule(validations, options, `${collectionName}.${i}${rest}`, errors);
+    validateRule(validations, options, `${collectionName}.${i}${rest}`, errors, justDropError);
   });
 }
 
-function callValueValidator(validations, options, name, value) {
+function callValueValidator(validations, options, name, value, justDropError) {
   const validator = validations[name] || validations[wildcard(name)];
 
-  return callValidator(validator, value, { ...options, name });
+  return callValidator(validator, value, { ...options, name }, justDropError);
 }
 
-function callValidator(validator, value, options) {
+function callValidator(validator, value, options, justDropError) {
+  if (justDropError) {
+    return null;
+  }
   if (Array.isArray(validator)) {
     return callArrayValidator(validator, value, options);
   }
