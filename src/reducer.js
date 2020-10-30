@@ -114,7 +114,10 @@ export default function reducer(state, action) {
 
         if (Array.isArray(value)) {
           Object.keys(validations).forEach((rule) => {
-            if (rule !== path && rule.startsWith(path)) {
+            const escapedPath = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const match = rule.match(new RegExp(`^${escapedPath}\\.(\\*|\\d+)`));
+
+            if (match && (match[1] === '*' || get(nextAttrs, `${path}.${match[1]}`) !== undefined)) {
               validateRule(validations, fullOpts, rule, nextErrors, justDropError);
             }
           });
