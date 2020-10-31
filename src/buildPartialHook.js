@@ -17,7 +17,16 @@ export default function buildPartialHook({
         config.validations = {};
 
         for (const key in validations) {
-          config.validations[`${prefix}.${key}`] = validations[key];
+          const path = `${prefix}.${key}`;
+
+          config.validations[path] = validations[key];
+
+          if (config.validations[path].partialDeps) {
+            const deps = config.validations[path].deps || [];
+
+            config.validations[path].deps =
+              deps.concat(config.validations[path].partialDeps.map((dep) => `${prefix}.${dep}`));
+          }
         }
 
         const resolvedConfig = resolveConfig(config);

@@ -476,12 +476,21 @@ function ItemForm({ usePartial, index }) {
     validations: {
       name: 'presence',
       count: {
-        rules: ['presence', function(value, { attrs }) {
-          if (attrs.username === 'guest' && +value > 10) {
-            return 'Guests are not allowed that many';
+        rules: [
+          'presence',
+          function(value, { attrs }) {
+            if (attrs.username === 'guest' && +value > 10) {
+              return 'Guests are not allowed that many';
+            }
+          },
+          function(value, { attrs }) {
+            if (attrs.items[index].name === 'rare item' && +value > 1) {
+              return 'Only one rare item is available';
+            }
           }
-        }],
-        deps: ['username']
+        ],
+        deps: ['username'],
+        partialDeps: ['name']
       }
     }
   });
@@ -499,6 +508,10 @@ As can be seen in example above, `usePartial`'s configuration object should
 specify attributes prefix, instead of form initial attributes. Also note that
 when specifying validation dependencies, full name of dependency should be
 specified, since partial's validation might depend on "root" form attributes.
+
+To specify "local" dependencies that are related only to inputs governed by
+`usePartial` hook, one should use `partialDeps` configuration key. It is only
+available when used together with `usePartial` hook.
 
 Also note that "Dedicated Form Hook" feature bellow, which appeared later than
 form partials, might provide even more convenient form usage and code organization.

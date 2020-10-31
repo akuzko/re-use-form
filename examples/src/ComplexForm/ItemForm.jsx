@@ -20,18 +20,28 @@ export default function ItemForm({ index, usePartial, onRemove }) {
             if (attrs.username != 'richguy' && +value > 10) {
               return "You can't afford this much!";
             }
+          },
+          function(value, { attrs }) {
+            if (attrs.items[index].id > 10 && value != 1) {
+              return 'Only one such item is available';
+            }
           }
         ],
-        deps: ['username']
+        deps: ['username'],
+        partialDeps: ['id']
       }
     }
   });
 
   const changeId = useCallback((id) => {
     set((attrs) => {
-      if (+attrs.count > 100) return attrs;
-
-      return { id, count: '' };
+      if (+attrs.count > 1000) {
+        return attrs;
+      } else if (+attrs.count > 100) {
+        return { id };
+      } else {
+        return { id, count: '' };
+      }
     });
   }, []);
 

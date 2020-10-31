@@ -551,7 +551,17 @@ describe('useForm', () => {
         prefix: `items.${index}`,
         validations: {
           name: 'presence',
-          amount: 'presence'
+          amount: {
+            rules: [
+              'presence',
+              function(value, { attrs }) {
+                if (+value > 1 && attrs.items[index].name === 'expensive') {
+                  return 'Too many';
+                }
+              }
+            ],
+            partialDeps: ['name']
+          }
         }
       });
 
@@ -599,6 +609,16 @@ describe('useForm', () => {
       wrapper.find('input.items-0-amount').simulate('change', { target: { value: '100' } });
       expect(wrapper.find('.items-0-name .error')).to.have.lengthOf(1);
       expect(wrapper.find('.items-0-name-error').text()).to.eq("Can't be empty");
+    });
+
+    it('allows to specify partial validation deps', () => {
+      const wrapper = mount(<OrderForm />);
+
+      wrapper.find('.validate').simulate('click');
+      wrapper.find('input.items-0-amount').simulate('change', { target: { value: '2' } });
+      expect(wrapper.find('.items-0-amount .error')).to.have.lengthOf(0);
+      wrapper.find('input.items-0-name').simulate('change', { target: { value: 'expensive' } });
+      expect(wrapper.find('.items-0-amount .error')).to.have.lengthOf(1);
     });
   });
 
