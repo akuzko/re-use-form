@@ -28,7 +28,7 @@ function callEachValidator(validations, options, name, errors, justDropError) {
 }
 
 function callValueValidator(validations, options, name, value, justDropError) {
-  const validator = validations[name] || validations[wildcard(name)];
+  const validator = findValidator(validations, name);
 
   return callValidator(validator, value, { ...options, name }, justDropError);
 }
@@ -81,6 +81,20 @@ function stringToValidator(name) {
   if (!validator) throw new Error(`${name} validation rule is not defined`);
 
   return validator;
+}
+
+function findValidator(validations, name) {
+  for (const path in validations) {
+    const pathPattern = escapePath(path).replace('\\*', '\\d+');
+
+    if (new RegExp(`^${pathPattern}$`).test(name)) {
+      return validations[path];
+    }
+  }
+}
+
+export function escapePath(path) {
+  return path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 export function wildcard(name) {

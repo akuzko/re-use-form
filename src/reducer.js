@@ -1,4 +1,4 @@
-import { validateAttr, validateRule, wildcard, compact } from './validations';
+import { validateAttr, validateRule, wildcard, escapePath, compact } from './validations';
 import { resolveConfig, mergeConfigs } from './config';
 import update from 'update-js';
 import get from 'get-lookup';
@@ -114,7 +114,7 @@ export default function reducer(state, action) {
 
         if (Array.isArray(value)) {
           Object.keys(validations).forEach((rule) => {
-            const escapedPath = path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const escapedPath = escapePath(path);
             const match = rule.match(new RegExp(`^${escapedPath}\\.(\\*|\\d+)`));
 
             if (match && (match[1] === '*' || get(nextAttrs, `${path}.${match[1]}`) !== undefined)) {

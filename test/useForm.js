@@ -349,12 +349,17 @@ describe('useForm', () => {
                 }
               }],
               deps: ['foos.*.max']
+            },
+            'foos.2.nested.*.value': function(value) {
+              if (value === false) {
+                return 'Should be set';
+              }
             }
           }
         });
 
         const setState = () => {
-          set('foos', [{}, { value: 3, max: 2 }]);
+          set('foos', [{}, { value: 3, max: 2 }, { nested: [{ value: false }] }]);
         };
 
         return (
@@ -363,6 +368,22 @@ describe('useForm', () => {
                 <div key={i}>
                   <Input {...$(`foos.${i}.value`)} wrapperClassName={`foo-value-${i}`} />
                   <Input {...$(`foos.${i}.max`)} wrapperClassName={`foo-max-${i}`} />
+
+                  { get(`foos.${i}.nested`) && get(`foos.${i}.nested`).map((obj, n) => (
+                      <div key={n} className={`foos-${i}-nested-${n}`}>
+                        <input
+                          type="checkbox"
+                          checked={obj.value}
+                          onChange={(e) => set(`foos.${i}.nested.${n}.value`, e.target.checked)}
+                        />
+                        { getError(`foos.${i}.nested.${n}.value`) &&
+                          <div className="error">
+                            { getError(`foos.${i}.nested.${n}.value`) }
+                          </div>
+                        }
+                      </div>
+                    ))
+                  }
                 </div>
               ))
             }
@@ -387,6 +408,13 @@ describe('useForm', () => {
         expect(wrapper.find('.foo-value-1 .error')).to.have.lengthOf(0);
         wrapper.find('.foo-max-1 input').simulate('change', { target: { value: '1' } });
         expect(wrapper.find('.foo-value-1 .error')).to.have.lengthOf(1);
+      });
+
+      it('allows to use semi-wildcard validation rules', () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('.setState').simulate('click');
+        wrapper.find('.validate').simulate('click');
+        expect(wrapper.find('.foos-2-nested-0 .error')).to.have.lengthOf(1);
       });
     });
 

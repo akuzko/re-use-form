@@ -9,7 +9,7 @@ ItemForm.propTypes = {
 };
 
 export default function ItemForm({ index, usePartial, onRemove }) {
-  const { $, set } = usePartial({
+  const { $, get, set, getError } = usePartial({
     prefix: `items.${index}`,
     validations: {
       id: 'presence',
@@ -29,7 +29,8 @@ export default function ItemForm({ index, usePartial, onRemove }) {
         ],
         deps: ['username'],
         partialDeps: ['id']
-      }
+      },
+      'wildcards.*.value': 'presence'
     }
   });
 
@@ -45,6 +46,12 @@ export default function ItemForm({ index, usePartial, onRemove }) {
     });
   }, []);
 
+  const addWildcard = () => {
+    const wildcards = get('wildcards') || [];
+
+    set('wildcards', [...wildcards, { value: false }]);
+  };
+
   return (
     <div>
       <div>
@@ -54,6 +61,23 @@ export default function ItemForm({ index, usePartial, onRemove }) {
         <Input {...$('count')} placeholder="Item Count" />
       </div>
 
+      <div>
+        { get('wildcards') && get('wildcards').map((wildcard, i) => (
+            <div key={i}>
+              <input
+                type="checkbox"
+                checked={get(`wildcards.${i}.value`)}
+                onChange={(e) => set(`wildcards.${i}.value`, e.target.checked)}
+              />
+              { getError(`wildcards.${i}.value`) &&
+                <div className="error">{ getError(`wildcards.${i}.value`) }</div>
+              }
+            </div>
+          ))
+        }
+      </div>
+
+      <button onClick={addWildcard}>Add wildcard</button>
       <button onClick={onRemove}>Remove this Item</button>
     </div>
   );
