@@ -84,13 +84,15 @@ function stringToValidator(name) {
 }
 
 function findValidator(validations, name) {
-  for (const path in validations) {
-    const pathPattern = escapePath(path).replace('\\*', '\\d+');
+  return Object.entries(validations).reduce((toValidate, [path, validator]) => {
+    const pathPattern = escapePath(path).replace(/\\\*/g, '\\d+');
 
     if (new RegExp(`^${pathPattern}$`).test(name)) {
-      return validations[path];
+      toValidate.push(validator);
     }
-  }
+
+    return toValidate;
+  }, []);
 }
 
 export function escapePath(path) {

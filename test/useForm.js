@@ -354,12 +354,17 @@ describe('useForm', () => {
               if (value === false) {
                 return 'Should be set';
               }
+            },
+            'foos.*.nested.*.value': function(value, { name }) {
+              if (name === 'foos.2.nested.1.value') {
+                return 'Should not be set';
+              }
             }
           }
         });
 
         const setState = () => {
-          set('foos', [{}, { value: 3, max: 2 }, { nested: [{ value: false }] }]);
+          set('foos', [{}, { value: 3, max: 2 }, { nested: [{ value: false }, { value: true }] }]);
         };
 
         return (
@@ -410,11 +415,12 @@ describe('useForm', () => {
         expect(wrapper.find('.foo-value-1 .error')).to.have.lengthOf(1);
       });
 
-      it('allows to use semi-wildcard validation rules', () => {
+      it('allows to use semi-wildcard and all-wildcard validation rules', () => {
         const wrapper = mount(<Form />);
         wrapper.find('.setState').simulate('click');
         wrapper.find('.validate').simulate('click');
         expect(wrapper.find('.foos-2-nested-0 .error')).to.have.lengthOf(1);
+        expect(wrapper.find('.foos-2-nested-1 .error')).to.have.lengthOf(1);
       });
     });
 
