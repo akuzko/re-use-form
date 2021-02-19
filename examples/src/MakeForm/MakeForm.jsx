@@ -9,12 +9,10 @@ export default function MakeForm() {
     validations: {
       defaultOptions: { t },
       rules: {
-        'items.*.count': {
-          deps: ['items.*.id'],
-          rules: function(value, { name, attrs }) {
-            const index = +name.split('.')[1];
-
-            if (+attrs.items[index].id > 10 && +value > 10) {
+        'items.(itemIndex).count': {
+          deps: ['items.^.id', 'username'],
+          rules: (value, { itemIndex, attrs }) => {
+            if (+attrs.items[itemIndex].id > 10 && +value > 10 && attrs.username !== 'rich') {
               return 'Too Many';
             }
           }

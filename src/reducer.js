@@ -1,11 +1,10 @@
-import { validateAttr, validateRule, wildcard, escapePath, compact } from './validations';
+import { validateAttr, validateRule, getValidationDeps, escapePath, compact } from './validations';
 import { resolveConfig, mergeConfigs } from './config';
 import update from 'update-js';
 import get from 'get-lookup';
 
 export default function reducer(state, action) {
   const { attrs, errors, validations, validationOptions, validationDeps, validationStrategy, isValidated, configs } = state;
-  // const shouldValidateOnChange = Object.values(errors).some(Boolean);
   let shouldValidateOnChange = false;
   let justDropError = false;
 
@@ -106,9 +105,9 @@ export default function reducer(state, action) {
         const nextAttrs = update(attrs, path, value);
         const fullOpts = { ...validationOptions, attrs: nextAttrs };
         const nextErrors = { [path]: validateAttr(validations, fullOpts, path, value, justDropError) };
-        const depsToValidate = validationDeps[path] || validationDeps[wildcard(path)];
+        const depsToValidate = getValidationDeps(validationDeps, path);
 
-        if (depsToValidate) {
+        if (depsToValidate.length) {
           depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors, justDropError));
         }
 
@@ -151,9 +150,9 @@ export default function reducer(state, action) {
 
         if (shouldValidateOnChange || justDropError) {
           const fullOpts = { ...validationOptions, attrs: nextAttrs };
-          const depsToValidate = validationDeps[fullPath] || validationDeps[wildcard(fullPath)];
+          const depsToValidate = getValidationDeps(validationDeps, fullPath);
 
-          if (depsToValidate) {
+          if (depsToValidate.length) {
             depsToValidate.forEach(name => validateRule(validations, fullOpts, name, nextErrors, justDropError));
           }
 

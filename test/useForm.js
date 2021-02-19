@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { expect } from 'chai';
 import { mount } from 'enzyme';
 import sinon from 'sinon';
@@ -421,6 +421,69 @@ describe('useForm', () => {
         wrapper.find('.validate').simulate('click');
         expect(wrapper.find('.foos-2-nested-0 .error')).to.have.lengthOf(1);
         expect(wrapper.find('.foos-2-nested-1 .error')).to.have.lengthOf(1);
+      });
+    });
+
+    describe('validation captures and pinned dependencies', () => {
+      function Form() {
+        const validationCounter = useRef(0);
+        const { get, set, $, getError, validate } = useForm({
+          initial: { foos: [] },
+          validations: {
+            onChangeStrategy: 'onAfterValidate',
+            rules: {
+              'foos': 'presence',
+              'foos.(index).value': {
+                rules: ['presence', (value, { index, attrs }) => {
+                  validationCounter.current++;
+                  const max = attrs.foos[index].max;
+
+                  if (+value > max) {
+                    return `Too much (max ${max})`;
+                  }
+                }],
+                deps: ['foos.^.max']
+              }
+            }
+          }
+        });
+
+        const setState = () => {
+          set('foos', [{ value: 2, max: 2 }, { value: 3, max: 2 }]);
+        };
+
+        return (
+          <div>
+            { get('foos').map((_item, i) => (
+                <div key={i}>
+                  <Input {...$(`foos.${i}.value`)} wrapperClassName={`foo-value-${i}`} />
+                  <Input {...$(`foos.${i}.max`)} wrapperClassName={`foo-max-${i}`} />
+                </div>
+              ))
+            }
+            { getError('foos') &&
+              <div className="foos-error">{ getError('foos') }</div>
+            }
+            <div className="validationCounter">{ validationCounter.current }</div>
+            <button onClick={setState} className="setState">Set State</button>
+            <button onClick={validate} className="validate">Validate</button>
+          </div>
+        );
+      }
+
+      it('allows to use validation captures and pinned dependencies', () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('.setState').simulate('click');
+        wrapper.find('.validate').simulate('click');
+        expect(wrapper.find('.foo-value-0 .error')).to.have.lengthOf(0);
+        expect(wrapper.find('.foo-value-1 .error')).to.have.lengthOf(1);
+        expect(wrapper.find('.validationCounter').text()).to.eq('2');
+        wrapper.find('.foo-value-1 input').simulate('change', { target: { value: '2' } });
+        expect(wrapper.find('.foo-value-1 .error')).to.have.lengthOf(0);
+        expect(wrapper.find('.validationCounter').text()).to.eq('3');
+        wrapper.find('.foo-max-1 input').simulate('change', { target: { value: '1' } });
+        expect(wrapper.find('.foo-value-1 .error')).to.have.lengthOf(1);
+        expect(wrapper.find('.validationCounter').text()).to.eq('4');
       });
     });
 

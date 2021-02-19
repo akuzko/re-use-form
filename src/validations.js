@@ -11,7 +11,7 @@ export function validateAttr(validations, options, name, value, justDropError) {
 }
 
 export function validateRule(validations, options, name, errors, justDropError) {
-  if (name.includes('*')) {
+  if (name.includes('*') || /\([^.]+\)/.test(name)) {
     callEachValidator(validations, options, name, errors, justDropError);
   } else {
     errors[name] = callValueValidator(validations, options, name, get(options.attrs, name), justDropError);
@@ -19,18 +19,20 @@ export function validateRule(validations, options, name, errors, justDropError) 
 }
 
 function callEachValidator(validations, options, name, errors, justDropError) {
-  const match = name.match(/^([^*]+)\.\*(.+)?$/);
-  const [collectionName, rest = ''] = match.slice(1);
+  const match = name.match(/^([^*()]+)\.(?:\*|(\([^.]+\)))?(.+)?$/);
+  const [collectionName, capture, rest = ''] = match.slice(1);
 
   (get(options.attrs, collectionName) || []).forEach((_item, i) => {
-    validateRule(validations, options, `${collectionName}.${i}${rest}`, errors, justDropError);
+    const fullOptions = capture ? { ...options, [capture.substring(1, capture.length - 1)]: i } : options;
+
+    validateRule(validations, fullOptions, `${collectionName}.${i}${rest}`, errors, justDropError);
   });
 }
 
 function callValueValidator(validations, options, name, value, justDropError) {
-  const validator = findValidator(validations, name);
+  const [validator, captures] = findValidator(validations, name);
 
-  return callValidator(validator, value, { ...options, name }, justDropError);
+  return callValidator(validator, value, { ...options, ...captures, name }, justDropError);
 }
 
 function callValidator(validator, value, options, justDropError) {
@@ -84,23 +86,52 @@ function stringToValidator(name) {
 }
 
 function findValidator(validations, name) {
-  return Object.entries(validations).reduce((toValidate, [path, validator]) => {
-    const pathPattern = escapePath(path).replace(/\\\*/g, '\\d+');
+  return Object.entries(validations).reduce(([toValidate, captures], [path, validator]) => {
+    const pathPattern = escapePath(path).replace(/\\\*|\\\([^.]+\\\)/g, '(\\d+)');
+    const inputNameMatch = name.match(new RegExp(`^${pathPattern}$`))?.slice(1);
 
-    if (new RegExp(`^${pathPattern}$`).test(name)) {
+    if (inputNameMatch) {
+      path.match(/\*|\([^.]+\)/g)?.forEach((capture, i) => {
+        const captureName = capture !== '*' && capture.substring(1, capture.length - 1);
+
+        if (captureName) {
+          captures[captureName] = +inputNameMatch[i];
+        }
+      });
+
       toValidate.push(validator);
     }
 
-    return toValidate;
-  }, []);
+    return [toValidate, captures];
+  }, [[], {}]);
 }
 
 export function escapePath(path) {
   return path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function wildcard(name) {
-  return name.replace(/\d+/g, '*');
+export function getValidationDeps(allDeps, inputName) {
+  return Object.keys(allDeps).reduce((deps, depName) => {
+    const inputParts = inputName.split('.');
+    const depNameParts = depName.split('.');
+    const depRegexp = new RegExp(`^${escapePath(depName).replace(/\\[\^*]/g, '\\d+')}$`);
+
+    if (depRegexp.test(inputName)) {
+      allDeps[depName].forEach((dep) => {
+        const depParts = dep.split('.');
+
+        if (inputParts.length > depParts.length) {
+          deps.push(dep);
+        } else {
+          const pinnedDep = depParts.map((part, i) => depNameParts[i] === '^' ? inputParts[i] : part).join('.');
+
+          deps.push(pinnedDep);
+        }
+      });
+    }
+
+    return deps;
+  }, []);
 }
 
 export function compact(errorsObject) {

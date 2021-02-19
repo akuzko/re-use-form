@@ -250,13 +250,16 @@ function UserForm() {
     validations: {
       'email': ['presence', 'email'],
       'fullName': 'presence',
-      'address.city': ['presence', function(value) {
-        if (!value) return;
+      'address.city': [
+        'presence',
+        (value) => {
+          if (!value) return;
 
-        if (!/^[A-Z]/.test(value)) {
-          return 'Should start with capital letter';
+          if (!/^[A-Z]/.test(value)) {
+            return 'Should start with capital letter';
+          }
         }
-      }],
+      ],
       'address.line': {
         presence: true,
         format: {
@@ -320,7 +323,7 @@ function ItemForm() {
         rules: [
           'presence',
           'numericality',
-          function(value, { attrs }) {
+          (value, { attrs }) => {
             if (value <= attrs.min) {
               return 'Should be greater than \'min\'';
             }
@@ -335,7 +338,7 @@ function ItemForm() {
 And now, if form has any errors rendered, `max` input will be validated whenever
 its `min` dependency input changes.
 
-#### Wildcard Validation
+#### Validation Wildcards and Index Capture
 
 If your form deals with collections of items, it is possible to declare validation
 for them using wildcards:
@@ -370,11 +373,11 @@ function OrderForm() {
       'items.*.max': {
         rules: [
           'presence',
-          function(value, { name, attrs }) {
+          (value, { name, attrs }) => {
             const index = +name.split('.')[1];
 
             if (value <= attrs.items[index].min) {
-              return `Should be greated than ${attrs.items[index].min}`;
+              return `Should be greater than ${attrs.items[index].min}`;
             }
           }
         ],
@@ -386,7 +389,66 @@ function OrderForm() {
 ```
 
 Keep in mind, though, that such wildcard dependency means that change of
-_any_ `min` input will trigger validation of _every_ `max` input.
+_any_ `min` input will trigger validation of _every_ `max` input. If such
+behavior is not desired, one might want to use **pinned validation dependencies**
+by using "pin" `^` symbol instead of wildcard `*`:
+
+```js
+function OrderForm() {
+  const { $ } = useForm({
+    initial: { items: [] },
+    validations: {
+      'items.*.id': 'presence',
+      'items.*.min': 'presence',
+      'items.*.max': {
+        rules: [
+          'presence',
+          (value, { name, attrs }) => {
+            const index = +name.split('.')[1];
+
+            if (value <= attrs.items[index].min) {
+              return `Should be greater than ${attrs.items[index].min}`;
+            }
+          }
+        ],
+        deps: ['items.^.min']
+      }
+    }
+  });
+}
+```
+
+Such dependency means that change of `'items.1.min'` input would trigger
+validation only for corresponding `'items.1.max'` input.
+
+As can be seen from the example above, in some cases custom validation functions
+rely on item index when validating collection item. To ease it's access
+one may use validation rule with **index capturing**. When used, corresponding
+property will be added to validation options:
+
+```js
+function OrderForm() {
+  const { $ } = useForm({
+    initial: { items: [] },
+    validations: {
+      'items.*.id': 'presence',
+      'items.*.min': 'presence',
+      'items.(index).max': {
+        rules: [
+          'presence',
+          (value, { index, attrs }) => {
+            if (value <= attrs.items[index].min) {
+              return `Should be greater than ${attrs.items[index].min}`;
+            }
+          }
+        ],
+        deps: ['items.^.min']
+      }
+    }
+  });
+}
+
+````
 
 #### `withValidation` Helper
 
@@ -478,12 +540,12 @@ function ItemForm({ usePartial, index }) {
       count: {
         rules: [
           'presence',
-          function(value, { attrs }) {
+          (value, { attrs }) => {
             if (attrs.username === 'guest' && +value > 10) {
               return 'Guests are not allowed that many';
             }
           },
-          function(value, { attrs }) {
+          (value, { attrs }) => {
             if (attrs.items[index].name === 'rare item' && +value > 1) {
               return 'Only one rare item is available';
             }

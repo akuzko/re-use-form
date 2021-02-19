@@ -10,15 +10,6 @@ ItemForm.propTypes = {
 export default function ItemForm({ index }) {
   const { $, set, dropError, attrs: { items } } = useOrderForm();
 
-  const changeItemId = useCallback((value, { name }) => {
-    const index = +name.split('.')[1];
-
-    set({
-      [name]: value,
-      [`items.${index}.count`]: ''
-    });
-  }, []);
-
   const removeItem = useCallback(() => {
     const nextItems = [...items];
 
@@ -31,7 +22,7 @@ export default function ItemForm({ index }) {
   return (
     <div>
       <div>
-        <Input {...$(`items.${index}.id`, changeItemId)} placeholder="Item ID" />
+        <Input {...$(`items.${index}.id`)} placeholder="Item ID" />
       </div>
       <div>
         <Input {...$(`items.${index}.count`)} placeholder="Item Count" />
