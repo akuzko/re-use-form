@@ -14,7 +14,11 @@ export default function ItemForm({ index }) {
     const nextItems = [...items];
 
     nextItems.splice(index, 1);
-    set('items', nextItems);
+    set('items', nextItems)
+      .then(() => {
+        // eslint-disable-next-line no-console
+        console.log(`Item ${index} removed`);
+      });
     dropError(`items.${index}.id`);
     dropError(`items.${index}.count`);
   }, [items, index]);

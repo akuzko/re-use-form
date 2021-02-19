@@ -31,7 +31,7 @@ export function resolveConfig(config) {
     validations,
     validationDeps,
     validationStrategy,
-    helpers: config.helpers ? [config.helpers] : []
+    helpers: Array.isArray(config.helpers) ? config.helpers : (config.helpers ? [config.helpers] : [])
   };
 }
 

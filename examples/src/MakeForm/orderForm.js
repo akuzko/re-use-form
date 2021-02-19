@@ -1,5 +1,16 @@
 import { makeForm } from '../../../src';
 
+function promisedSetters({ set }) {
+  return {
+    set(...args) {
+      return new Promise((resolve) => {
+        set(...args);
+        resolve(args);
+      });
+    }
+  };
+}
+
 export const [FormProvider, useOrderForm] = makeForm({
   initial: {
     guest: false,
@@ -17,7 +28,10 @@ export const [FormProvider, useOrderForm] = makeForm({
     'items.*.id': 'presence',
     'items.*.count': 'presence'
   },
-  helpers: ({ attrs }) => ({
-    isFreeDelivery: attrs.address.includes('123')
-  })
+  helpers: [
+    promisedSetters,
+    ({ attrs }) => ({
+      isFreeDelivery: attrs.address.includes('123')
+    })
+  ]
 });
