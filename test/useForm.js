@@ -487,6 +487,48 @@ describe('useForm', () => {
       });
     });
 
+    describe('strict validation rules', () => {
+      function Form() {
+        const { get, $, getError, validate } = useForm({
+          initial: { foos: [{ value: 1 }] },
+          validations: {
+            onChangeStrategy: 'onAfterValidate',
+            rules: {
+              'foos.*.value': 'presence',
+              'foos.1.value': (value) => {
+                if (value) return 'Always invalid';
+              }
+            }
+          }
+        });
+
+        return (
+          <div>
+            { get('foos').map((_item, i) => (
+                <div key={i}>
+                  <Input {...$(`foos.${i}.value`)} wrapperClassName={`foo-value-${i}`} />
+                  <Input {...$(`foos.${i}.max`)} wrapperClassName={`foo-max-${i}`} />
+                </div>
+              ))
+            }
+
+            { getError('foos.1.value') &&
+              <div className="foo-1-error">{ getError('foos.1.value') }</div>
+            }
+
+            <button onClick={validate} className="validate">Validate</button>
+          </div>
+        );
+      }
+
+      it('does not validate unexisting items via wildcards if other rule with explicit index exists', () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('.validate').simulate('click');
+        expect(wrapper.find('.foo-value-0 .error')).to.have.lengthOf(0);
+        expect(wrapper.find('.foo-1-error')).to.have.lengthOf(0);
+      });
+    });
+
     describe('callbacks usage', () => {
       // eslint-disable-next-line react/prop-types
       function Form({ onValid, onError }) {

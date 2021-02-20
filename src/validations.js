@@ -30,7 +30,7 @@ function callEachValidator(validations, options, name, errors, justDropError) {
 }
 
 function callValueValidator(validations, options, name, value, justDropError) {
-  const [validator, captures] = findValidator(validations, name);
+  const [validator, captures] = findValidator(validations, name, options);
 
   return callValidator(validator, value, { ...options, ...captures, name }, justDropError);
 }
@@ -85,12 +85,12 @@ function stringToValidator(name) {
   return validator;
 }
 
-function findValidator(validations, name) {
+function findValidator(validations, name, { attrs }) {
   return Object.entries(validations).reduce(([toValidate, captures], [path, validator]) => {
     const pathPattern = escapePath(path).replace(/\\\*|\\\([^.]+\\\)/g, '(\\d+)');
     const inputNameMatch = name.match(new RegExp(`^${pathPattern}$`))?.slice(1);
 
-    if (inputNameMatch) {
+    if (inputNameMatch && isValidatableCollectionPath(path, attrs, inputNameMatch)) {
       path.match(/\*|\([^.]+\)/g)?.forEach((capture, i) => {
         const captureName = capture !== '*' && capture.substring(1, capture.length - 1);
 
@@ -104,6 +104,25 @@ function findValidator(validations, name) {
 
     return [toValidate, captures];
   }, [[], {}]);
+}
+
+function isValidatableCollectionPath(path, attrs, inputNameMatch) {
+  let i = 0;
+  return path.split('.').reduce((pathTaken, part) => {
+    if (pathTaken === false) return false;
+
+    if (part === '*' || /\([^.]+\)/.test(part)) {
+      const collectionIndex = +inputNameMatch[i++];
+
+      if (get(attrs, pathTaken)?.length <= collectionIndex) {
+        return false;
+      }
+
+      return `${pathTaken}.${collectionIndex}`;
+    } else {
+      return pathTaken ? `${pathTaken}.${part}` : part;
+    }
+  }, '');
 }
 
 export function escapePath(path) {
