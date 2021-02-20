@@ -199,15 +199,80 @@ mentioned helpers are about.
 ### Form Validations
 
 `re-use-form` provides a very easy way to declare form validations,
-which will automatically validate inputs on change when required. Each
-validation rule is defined via `defValidation` function call. Validation
-handler function used in this call should accept two arguments - input's
-`value` and validation `options`. By default, `re-use-form` will pass
-form attributes as `attrs` option, and name of the input being validated
-as `name` option. Even if not used very often, this may become in handy
-when defining custom wildcard validations that depend on other values
-of the form. Also, the most common use case scenario is to allow user to
-specify custom error message when validation is failed.
+which will automatically validate inputs on change when required.
+
+#### Vanilla JS Functions
+
+It is always possible to pass a function, or array of functions as input
+validation rule. Each validator function will be called with input value
+as first argument, and object of validation options as second one. By
+default, this object will have input `name` and `attrs` properties. This
+function should return an error if input's `value` doesn't pass validation
+logic:
+
+```js
+function presence(value) {
+  if (!value) return 'Cannot be blank';
+}
+
+function UserForm() {
+  const { $, validate } = useForm({
+    validations: {
+      username: presence
+    }
+  });
+  // ...
+}
+```
+
+Since it's very common to have additional validation options, at least
+customizable message, the easiest way to achieve this is to have
+validator-generating functions that accept additional options and pass
+them to validator function they return:
+
+```js
+function presence({ message }) {
+  return (value) => {
+    if (!value) {
+      return message || 'Cannot be blank'
+    }
+  }
+}
+
+function format({ pattern, message }) {
+  return (value) => {
+    if (!value) return;
+
+    if (!pattern.test(value)) {
+      return message || 'Invalid format';
+    }
+  }
+}
+
+function UserForm() {
+  const { $, validate } = useForm({
+    validations: {
+      username: [
+        presence({ message: 'Please enter username' }),
+        format({ pattern: /^[a-zA-Z0-9]{3,}$/, message: 'Only alphanumerics are allowed, min 3 symbols' })
+      ]
+    }
+  });
+  // ...
+}
+````
+
+#### `defValidation` Helper
+
+`re-use-form` also allows to predefine named validation rules via `defValidation`
+helper function call. Just like validators described above, validation handler
+function used in this call should accept two arguments - input's `value` and
+validation `options`. As already mentioned, by default, `re-use-form` will pass
+form attributes as `attrs` option, and name of the input being validated as `name`
+option. Even if not used very often, this may become in handy when defining custom
+wildcard validations that depend on other values of the form. Also, the most common
+use case scenario is to allow user to specify custom error message when validation
+is failed.
 
 ```js
 import { defValidation } from 're-use-form';
