@@ -37,8 +37,8 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
   }, []);
 
   // Used in a useEffect to apply external attributes to a form.
-  const setFormAttrs = useCallback((attrs) => {
-    return dispatch(setFullAttrs(attrs));
+  const setFormAttrs = useCallback((attrs, options) => {
+    return dispatch(setFullAttrs(attrs, options));
   }, []);
 
   const validate = useCallback((name) => {

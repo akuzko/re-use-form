@@ -163,9 +163,9 @@ export default function reducer(state, action) {
       return { ...state, attrs: nextAttrs, errors: compact(nextErrors), isPristine: false, action };
     }
     case 'setFullAttrs': {
-      const { attrs } = action;
+      const { attrs, options = {} } = action;
 
-      if (shouldValidateOnChange) {
+      if (shouldValidateOnChange && options.validate !== false) {
         // When all attributes are set at once and validation should be
         // executed on set, run all validation routines.
         const nextErrors = {};
@@ -299,8 +299,8 @@ export function setAttrs(attrs, prefix) {
   return { type: 'setAttrs', attrs, prefix, isAttrUpdate: true };
 }
 
-export function setFullAttrs(attrs) {
-  return { type: 'setFullAttrs', attrs };
+export function setFullAttrs(attrs, options) {
+  return { type: 'setFullAttrs', attrs, options };
 }
 
 export function validate(path, resolve, reject) {
