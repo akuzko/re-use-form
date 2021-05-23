@@ -15,6 +15,20 @@ export default function ControlledForm() {
     setAttrs(attrs);
   }, []);
 
+  const onSet = useCallback((setAttrs, { attrs, nextAttrs }) => {
+    console.log({ attrs, nextAttrs });
+    setAttrs({ validate: false });
+  }, []);
+
+  const addItem = useCallback(() => {
+    setAttrs((attrs) => {
+      return {
+        ...attrs,
+        items: [...attrs.items, {}]
+      };
+    });
+  }, []);
+
   const config = useMemo(() => ({
     helpers: () => ({
       fillForm: () => {
@@ -47,8 +61,11 @@ export default function ControlledForm() {
   }), []);
 
   return (
-    <FormProvider config={config} attrs={attrs} onChange={onChange}>
+    <FormProvider config={config} attrs={attrs} onChange={onChange} onSet={onSet}>
       <OrderForm />
+      <div>
+        <button onClick={addItem}>Add item</button>
+      </div>
     </FormProvider>
   );
 }

@@ -753,6 +753,39 @@ function OrderEditor() {
 }
 ```
 
+#### `FormProvider` props
+
+- `config` - additional config that will be merged into the one specified in
+  `makeForm` call.
+
+- `attrs` - form attributes that are stored and provided from external source.
+
+- `onChange(attrs)` - function that will be called whenever form attributes
+  are requested to be changed (via `set` function call, for instance).
+
+- `onSet(setAttrs, { attrs, nextAttrs })` - function that will be called whenever
+  `attrs` are assigned to the form from external source. This function received
+  `setAttrs` function as first parameter and `{ attrs, nextAttrs }` object as
+  second one. `setAttrs` function has to be called to complete the sync of external
+  attributes and form attributes. This function can be called with additional _options_
+  object. The only supported option is `validate`:
+
+```jsx
+const onSet = useCallback((setAttrs) => {
+  setAttrs({ validate: false });
+})
+
+return (
+  <FormProvider
+    attrs={attrs}
+    onChange={onChange}
+    onSet={onSet}
+  >
+    <OrderForm />
+  </FormProvider>
+);
+````
+
 #### Additional Helpers
 
 In `makeForm` use-case scenarios there might also be a need in some additional

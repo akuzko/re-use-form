@@ -957,5 +957,48 @@ describe('useForm', () => {
       expect(wrapper.find('.address .error')).to.have.lengthOf(1);
       expect(wrapper.find('.items-0 .error')).to.have.lengthOf(1);
     });
+
+    it('allows to skip validation via onSet property', () => {
+      function Page() {
+        const [attrs, setAttrs] = useState({
+          username: 'foo',
+          address: '',
+          guest: false,
+          items: [{}]
+        });
+
+        const addItem = () => {
+          setAttrs({ ...attrs, items: [...attrs.items, {}] });
+        };
+
+        const config = useMemo(() => ({
+          validations: {
+            'items.*.name': 'presence'
+          }
+        }), []);
+
+        const onSet = (setAttrs) => {
+          setAttrs({ validate: false });
+        };
+
+        return (
+          <div>
+            <FormProvider config={config} attrs={attrs} onChange={setAttrs} onSet={onSet}>
+              <OrderForm />
+            </FormProvider>
+            <button className="helper-add-item" onClick={addItem}>Add item</button>
+          </div>
+        );
+      }
+
+      const wrapper = mount(<Page />);
+
+      wrapper.find('.validate').simulate('click');
+      wrapper.find('.helper-add-item').simulate('click');
+
+      expect(wrapper.find('.address .error')).to.have.lengthOf(1);
+      expect(wrapper.find('.items-0 .error')).to.have.lengthOf(1);
+      expect(wrapper.find('.items-1 .error')).to.have.lengthOf(0);
+    });
   });
 });

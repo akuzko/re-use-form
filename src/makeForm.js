@@ -5,7 +5,7 @@ export default function makeForm(mainConfig = {}) {
   const Context = createContext({ attrs: mainConfig.initial });
 
   // eslint-disable-next-line react/prop-types
-  function FormProvider({ config, children, attrs, onChange }) {
+  function FormProvider({ config, children, attrs, onChange, onSet }) {
     if (attrs && !mainConfig.initial) {
       mainConfig.initial = attrs;
     }
@@ -24,9 +24,9 @@ export default function makeForm(mainConfig = {}) {
         _action._processed = true;
         onChange(formAttrs);
       } else if (attrs && attrs !== formAttrs) {
-        setFormAttrs(attrs);
+        onSet((...args) => setFormAttrs(attrs, ...args), { attrs: formAttrs, nextAttrs: attrs });
       }
-    }, [attrs, formAttrs, _action, onChange]);
+    }, [attrs, formAttrs, _action, onChange, onSet]);
 
     return (
       <Context.Provider value={helpers}>
@@ -34,6 +34,10 @@ export default function makeForm(mainConfig = {}) {
       </Context.Provider>
     );
   }
+
+  FormProvider.defaultProps = {
+    onSet: (setAttrs) => setAttrs()
+  };
 
   function useContextForm() {
     return useContext(Context);
