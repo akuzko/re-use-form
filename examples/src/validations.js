@@ -22,3 +22,17 @@ defValidation('format', (value, { t = defaultT, message, pattern }) => {
     return message || t('form.validations.invalid_format');
   }
 });
+
+defValidation('taken', (value, { t = defaultT, message, delay = 1000 }) => {
+  if (!value) return;
+
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (/taken/.test(value)) {
+        reject(message || t('form.validations.already_taken'));
+      } else {
+        resolve();
+      }
+    }, delay);
+  });
+});

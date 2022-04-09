@@ -22,6 +22,20 @@ describe('useForm', () => {
         return lessThanMessage || `Should be less than ${lessThan}`;
       }
     });
+
+    defValidation('uniqueness', (value, { message, delay = 50 }) => {
+      if (!value) return;
+
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          if (/taken/.test(value)) {
+            reject(message || 'Already taken');
+          } else {
+            resolve();
+          }
+        }, delay);
+      });
+    });
   });
 
   function Form() {
@@ -633,6 +647,101 @@ describe('useForm', () => {
 
           wrapper.find('.foo input').simulate('change', { target: { value: '' } });
           expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
+        });
+      });
+    });
+
+    describe('async validation', () => {
+      // eslint-disable-next-line react/prop-types
+      function Form({ asyncErrorsStrategy = 'takeFirst', asyncValidate = true }) {
+        const { $, validate } = useForm({
+          initial: { username: '', email: '' },
+          validations: {
+            rules: {
+              username: 'presence',
+              email: 'presence',
+            },
+            async: {
+              rules: {
+                email: [
+                  'uniqueness',
+                  {
+                    uniqueness: {
+                      delay: 75,
+                      message: 'Still taken'
+                    }
+                  }
+                ]
+              },
+              errorsStrategy: asyncErrorsStrategy
+            }
+          }
+        });
+
+        return (
+          <div className="form">
+            <Input {...$('email')} wrapperClassName="emailInput" className="email" errorClassName="emailError error" />
+            <Input {...$('username')} wrapperClassName="username"  />
+            <button onClick={() => validate({ async: asyncValidate })} className="validate">Validate</button>
+            <button onClick={() => validate('email')} className="validateEmail">Validate email</button>
+          </div>
+        );
+      }
+
+      function wait(delay) {
+        return new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      it('does not call async validation if local validation fails', () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('.validate').simulate('click');
+        expect(wrapper.find('.emailError').text()).to.eq("Can't be empty");
+      });
+
+      it('calls async validation when value is locally valid', async () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('input.email').simulate('change', { target: { value: 'taken' } });
+        wrapper.find('.validate').simulate('click');
+        await wait(100);
+        wrapper.update();
+        expect(wrapper.find('.emailError').text()).to.eq('Already taken');
+      });
+
+      it('keeps other errors when validating single input with async', async () => {
+        const wrapper = mount(<Form />);
+        wrapper.find('.validate').simulate('click');
+        expect(wrapper.find('.error')).to.have.lengthOf(2);
+        wrapper.find('input.email').simulate('change', { target: { value: 'valid' } });
+        wrapper.find('.validateEmail').simulate('click');
+        await wait(100);
+        expect(wrapper.find('.error')).to.have.lengthOf(1);
+      });
+
+      it('allows to skip async validation with explicit option', async () => {
+        const wrapper = mount(<Form asyncValidate={false} />);
+        wrapper.find('input.email').simulate('change', { target: { value: 'taken' } });
+        wrapper.find('.validate').simulate('click');
+        await wait(100);
+        expect(wrapper.find('.error')).to.have.lengthOf(1);
+      });
+
+      describe('async errors handling strategy', () => {
+        it('joins errors when set to "join"', async () => {
+          const wrapper = mount(<Form asyncErrorsStrategy="join" />);
+          wrapper.find('input.email').simulate('change', { target: { value: 'taken' } });
+          wrapper.find('.validate').simulate('click');
+          await wait(100);
+          wrapper.update();
+          expect(wrapper.find('.emailError').text()).to.eq('Already taken; Still taken');
+        });
+
+        it('allows to use custom function', async () => {
+          const wrapper = mount(<Form asyncErrorsStrategy={(errors) => errors[errors.length - 1]} />);
+          wrapper.find('input.email').simulate('change', { target: { value: 'taken' } });
+          wrapper.find('.validate').simulate('click');
+          await wait(100);
+          wrapper.update();
+          expect(wrapper.find('.emailError').text()).to.eq('Still taken');
         });
       });
     });

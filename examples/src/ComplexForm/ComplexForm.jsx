@@ -10,17 +10,34 @@ const initialForm = {
 };
 
 export default function ComplexForm() {
-  const { $, get, set, getError, errors, reset: doReset, validate, usePartial } = useForm({
+  const { $, get, set, getError, errors, reset: doReset, validate, usePartial, validating } = useForm({
     initial: initialForm,
     validations: {
       onChangeStrategy: 'onAfterValidate',
-      username: {
-        presence: true,
-        format: {
-          pattern: /^[\w\s\d.,]+$/
+      rules: {
+        username: {
+          presence: true,
+          format: {
+            pattern: /^[\w\s\d.,]+$/
+          },
         },
+        items: 'presence'
       },
-      items: 'presence'
+      async: {
+        rules: {
+          username: [{
+            taken: {
+              delay: 1000
+            }
+          }, {
+            taken: {
+              delay: 2000,
+              message: 'Still taken'
+            }
+          }]
+        },
+        errorsStrategy: 'join'
+      },
     }
   });
 
@@ -38,6 +55,22 @@ export default function ComplexForm() {
   }, [items]);
 
   const reset = useCallback(() => doReset(), []);
+
+  const submit = useCallback(() => {
+    validate()
+      .then((attrs) => {
+        console.log('Validation passed', attrs);
+      })
+      .catch((errors) => {
+        console.log('Validation errors', errors);
+      });
+  }, []);
+
+  const validateUsername = useCallback(() => {
+    validate('username')
+      .then((value) => console.log(`Username '${value}' is valid`))
+      .catch(({ username: error }) => console.log(`Username is invalid: ${error}`));
+  }, []);
 
   return (
     <>
@@ -63,8 +96,12 @@ export default function ComplexForm() {
 
       <div>
         <button onClick={reset}>Reset</button>
-        <button onClick={validate}>Validate</button>
+        <button onClick={submit}>Validate</button>
+        <button onClick={validateUsername}>Validate Username</button>
       </div>
+      { validating &&
+        <div>Validating...</div>
+      }
 
       <div>{ JSON.stringify(get()) }</div>
       <div>{ JSON.stringify(errors) }</div>

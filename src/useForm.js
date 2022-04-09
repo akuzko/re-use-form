@@ -1,4 +1,4 @@
-import { useReducer, useCallback, useEffect, useMemo } from 'react';
+import { useReducer, useCallback, useEffect, useMemo, useRef } from 'react';
 import getValue from 'get-lookup';
 import reducer, {
   init,
@@ -9,20 +9,31 @@ import reducer, {
   removeConfig,
   amendInitialConfig,
   validate as doValidate,
+  validateAsync,
+  finishValidateAsync,
   setError as doSetError,
   setErrors as doSetErrors,
   reset as doReset,
   setState as doSetState
 } from './reducer';
-import { ValidationPromise } from './validations';
+import { ValidationPromise, compact } from './validations';
 import buildPartialHook from './buildPartialHook';
 import HandlersCache from './HandlersCache';
 import { resolveConfig, DEFAULT_CONFIG } from './config';
 
 export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
   const initial = useMemo(() => init(config, secondaryConfig), []);
-  const [{ attrs, errors, isPristine, pureHandlers, helpers, action }, dispatch] = useReducer(reducer, initial);
+  const [{ attrs, errors, isPristine, pureHandlers, helpers, action, validating }, dispatch] = useReducer(reducer, initial);
   const isValid = !Object.values(errors).some(Boolean);
+  const unmountedRef = useRef(false);
+
+  useEffect(() => () => unmountedRef.current = true, []);
+
+  const dispatchIfMounted = useCallback((action) => {
+    if (unmountedRef.current) return;
+
+    dispatch(action);
+  },[]);
 
   const handlersCache = useMemo(() => new HandlersCache(pureHandlers), []);
 
@@ -41,11 +52,48 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     return dispatch(setFullAttrs(attrs, options));
   }, []);
 
-  const validate = useCallback((name) => {
-    if (typeof name !== 'string') name = null;
+  const validate = useCallback((name = null, options = { async: true }) => {
+    if (name && typeof name === 'object') {
+      options = name;
+      name = null;
+    }
+    const { async: doValidateAsync } = options;
 
-    return new ValidationPromise((resolve, reject) => {
-      dispatch(doValidate(name, resolve, reject));
+    return new ValidationPromise((resolveValidation, rejectValidation) => {
+      new Promise((resolve, reject) => {
+        dispatch(doValidate(name, resolve, reject));
+      }).then((attrs) => {
+        if (!doValidateAsync) {
+          return resolveValidation(attrs);
+        }
+
+        return new Promise((resolve, reject) => {
+          dispatchIfMounted(validateAsync(name, resolve, reject));
+        }).then((attrs) => {
+          dispatchIfMounted(finishValidateAsync());
+          resolveValidation(attrs);
+        }).catch((errors) => {
+          dispatchIfMounted(finishValidateAsync(errors));
+          rejectValidation(errors);
+        });
+      }).catch((errors) => {
+        if (!doValidateAsync) {
+          return rejectValidation(errors);
+        }
+
+        return new Promise((resolve, reject) => {
+          dispatchIfMounted(validateAsync(name, resolve, reject, Object.keys(compact(errors))));
+        }).then(() => {
+          dispatchIfMounted(finishValidateAsync(errors));
+          rejectValidation(errors);
+        }).catch((asyncErrors) => {
+          if (unmountedRef.current) return;
+          const allErrors = { ...errors, ...asyncErrors };
+
+          dispatchIfMounted(finishValidateAsync(allErrors));
+          rejectValidation(allErrors);
+        });
+      });
     });
   }, []);
 
@@ -123,6 +171,7 @@ export function useForm(config = DEFAULT_CONFIG, secondaryConfig) {
     usePartial,
     useConfig,
     validate,
+    validating,
     withValidation,
     input,
     $: input,

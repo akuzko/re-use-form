@@ -10,37 +10,39 @@ export function validateAttr(validations, options, name, value, justDropError) {
   return callValueValidator(validations, options, name, value, justDropError);
 }
 
-export function validateRule(validations, options, name, errors, justDropError) {
+export function validateRule(validations, options, name, errors, justDropError, aggregateErrors, skippedInputNames) {
   if (name.includes('*') || /\([^.]+\)/.test(name)) {
-    callEachValidator(validations, options, name, errors, justDropError);
+    callEachValidator(validations, options, name, errors, justDropError, aggregateErrors, skippedInputNames);
   } else {
-    errors[name] = callValueValidator(validations, options, name, get(options.attrs, name), justDropError);
+    errors[name] = callValueValidator(validations, options, name, get(options.attrs, name), justDropError, aggregateErrors, skippedInputNames);
   }
 }
 
-function callEachValidator(validations, options, name, errors, justDropError) {
+function callEachValidator(validations, options, name, errors, justDropError, aggregateErrors, skippedInputNames) {
   const match = name.match(/^([^*()]+)\.(?:\*|(\([^.]+\)))?(.+)?$/);
   const [collectionName, capture, rest = ''] = match.slice(1);
 
   (get(options.attrs, collectionName) || []).forEach((_item, i) => {
     const fullOptions = capture ? { ...options, [capture.substring(1, capture.length - 1)]: i } : options;
 
-    validateRule(validations, fullOptions, `${collectionName}.${i}${rest}`, errors, justDropError);
+    validateRule(validations, fullOptions, `${collectionName}.${i}${rest}`, errors, justDropError, aggregateErrors, skippedInputNames);
   });
 }
 
-function callValueValidator(validations, options, name, value, justDropError) {
+function callValueValidator(validations, options, name, value, justDropError, aggregateErrors, skippedInputNames) {
+  if (skippedInputNames?.includes(name)) return;
+
   const [validator, captures] = findValidator(validations, name, options);
 
-  return callValidator(validator, value, { ...options, ...captures, name }, justDropError);
+  return callValidator(validator, value, { ...options, ...captures, name }, justDropError, aggregateErrors);
 }
 
-function callValidator(validator, value, options, justDropError) {
+function callValidator(validator, value, options, justDropError, aggregateErrors) {
   if (justDropError) {
     return null;
   }
   if (Array.isArray(validator)) {
-    return callArrayValidator(validator, value, options);
+    return callArrayValidator(validator, value, options, aggregateErrors);
   }
   if (typeof validator === 'string') {
     return callStringValidator(validator, value, options);
@@ -49,31 +51,51 @@ function callValidator(validator, value, options, justDropError) {
     return validator(value, options);
   }
   if (validator && (typeof validator === 'object')) {
-    return callObjectValidator(validator, value, options);
+    return callObjectValidator(validator, value, options, aggregateErrors);
   }
 }
 
-function callArrayValidator(ary, value, options) {
-  for (let i = 0; i < ary.length; i++) {
-    const error = callValidator(ary[i], value, options);
+function callArrayValidator(ary, value, options, aggregateErrors) {
+  const errors = [];
 
-    if (error) return error;
+  for (let i = 0; i < ary.length; i++) {
+    const error = callValidator(ary[i], value, options, false, aggregateErrors);
+
+    if (error) {
+      if (aggregateErrors) {
+        errors.push(error);
+      } else {
+        return error;
+      }
+    }
   }
+
+  return aggregateErrors ? errors.flat() : undefined;
 }
 
 function callStringValidator(name, value, options) {
   return callValidator(stringToValidator(name), value, options);
 }
 
-function callObjectValidator(obj, value, options) {
+function callObjectValidator(obj, value, options, aggregateErrors) {
+  const errors = [];
+
   for (const name in obj) {
     if (!obj[name]) continue;
 
     const validatorOpts = typeof obj[name] === 'object' ? obj[name] : {};
     const error = callStringValidator(name, value, { ...options, ...validatorOpts });
 
-    if (error) return error;
+    if (error) {
+      if (aggregateErrors) {
+        errors.push(error);
+      } else {
+        return error;
+      }
+    }
   }
+
+  return aggregateErrors ? errors : undefined;
 }
 
 

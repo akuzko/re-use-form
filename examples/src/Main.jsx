@@ -6,7 +6,7 @@ import MakeForm from './MakeForm';
 import ControlledForm from './ControlledForm';
 
 export default function Main() {
-  const [currentTab, setCurrentTab] = useState('make');
+  const [currentTab, setCurrentTab] = useState('complex');
 
   return (
     <div>

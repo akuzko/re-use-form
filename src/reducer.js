@@ -4,7 +4,18 @@ import update from 'update-js';
 import get from 'get-lookup';
 
 export default function reducer(state, action) {
-  const { attrs, errors, validations, validationOptions, validationDeps, validationStrategy, isValidated, configs } = state;
+  const {
+    attrs,
+    errors,
+    validations,
+    validationOptions,
+    validationDeps,
+    validationStrategy,
+    asyncValidations,
+    asyncErrorsStrategy,
+    isValidated,
+    configs
+  } = state;
   let shouldValidateOnChange = false;
   let justDropError = false;
 
@@ -185,8 +196,8 @@ export default function reducer(state, action) {
       const nextErrors = {};
       const fullOpts = { ...validationOptions, attrs };
 
-      Object.keys(validations).forEach((rule) => {
-        validateRule(validations, fullOpts, rule, nextErrors);
+      Object.keys(validations).forEach((ruleName) => {
+        validateRule(validations, fullOpts, ruleName, nextErrors);
       });
 
       const isValid = !Object.values(nextErrors).some(Boolean);
@@ -222,6 +233,74 @@ export default function reducer(state, action) {
           ...errors, [path]: error
         }),
         action
+      };
+    }
+    case 'validateAsync': {
+      const { path, resolve, reject, skipInputs } = action;
+      const toValidate = path ? [path] : Object.keys(asyncValidations);
+      const fullOpts = { ...validationOptions, attrs };
+      let validationPromises = {};
+
+      toValidate.forEach((ruleName) => {
+        validateRule(asyncValidations, fullOpts, ruleName, validationPromises, false, true, skipInputs);
+      });
+
+      validationPromises = compact(validationPromises);
+
+      const entries = [];
+      Object.entries(validationPromises).forEach(([name, promises]) => {
+        promises.forEach(p => entries.push([name, p]));
+      });
+
+      Promise.allSettled(entries.map(e => e[1]).flat())
+        .then((results) => {
+          if (results.every(res => res.status === 'fulfilled')) {
+            resolve(path ? get(attrs, path) : attrs);
+          } else {
+            const nextErrors = {};
+
+            results.forEach((res, i) => {
+              if (res.status !== 'rejected') return;
+              const name = entries[i][0];
+
+              if (!nextErrors[name]) {
+                nextErrors[name] = [];
+              }
+              nextErrors[name].push(res.reason);
+            });
+
+            for (const name in nextErrors) {
+              if (asyncErrorsStrategy === 'takeFirst') {
+                nextErrors[name] = nextErrors[name][0];
+              } else if (asyncErrorsStrategy === 'join') {
+                nextErrors[name] = nextErrors[name].join('; ');
+              } else if (typeof asyncErrorsStrategy === 'function') {
+                nextErrors[name] = asyncErrorsStrategy(nextErrors[name]);
+              } else {
+                throw new Error(`Invalid async errors handling strategy '${asyncErrorsStrategy}'`);
+              }
+            }
+
+            reject({ ...errors, ...nextErrors });
+          }
+        });
+
+      return {
+        ...state,
+        validating: validationPromises,
+        action
+      };
+    }
+    case 'finishValidateAsync': {
+      const { errors: validationErrors } = action;
+
+      return {
+        ...state,
+        validating: false,
+        errors: {
+          ...errors,
+          ...validationErrors
+        }
       };
     }
     case 'setError': {
@@ -275,6 +354,7 @@ export function init(config, secondaryConfig) {
     configs: [fullConfig],
     isPristine: true,
     isValidated: false,
+    validating: false,
     ...fullConfig
   };
 }
@@ -309,6 +389,14 @@ export function validate(path, resolve, reject) {
   } else {
     return { type: 'validate', resolve, reject };
   }
+}
+
+export function validateAsync(path, resolve, reject, skipInputs = []) {
+  return { type: 'validateAsync', path, resolve, reject, skipInputs };
+}
+
+export function finishValidateAsync(errors = {}) {
+  return { type: 'finishValidateAsync', errors };
 }
 
 export function setError(name, error) {

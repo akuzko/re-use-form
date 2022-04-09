@@ -8,21 +8,32 @@ export function resolveConfig(config) {
   if (!config) return {};
   if (isResolved(config)) return config;
 
-  const validationOptions = {};
-  let validationsConfig = config.validations || {};
+  let validationOptions = {};
+  let validationsConfig = config.validations ? { ...config.validations } : {};
   let validationStrategy = 'onAnyError';
+  let asyncValidationsConfig = {};
 
-  if ('defaultOptions' in validationsConfig || 'onChangeStrategy' in validationsConfig) {
-    if (validationsConfig.defaultOptions) {
-      Object.assign(validationOptions, validationsConfig.defaultOptions);
-    }
-    if (validationsConfig.onChangeStrategy) {
-      validationStrategy = validationsConfig.onChangeStrategy;
-    }
+  if ('defaultOptions' in validationsConfig) {
+    validationOptions = validationsConfig.defaultOptions;
+    delete validationsConfig.defaultOptions;
+  }
+
+  if ('onChangeStrategy' in validationsConfig) {
+    validationStrategy = validationsConfig.onChangeStrategy;
+    delete validationsConfig.onChangeStrategy;
+  }
+
+  if ('async' in validationsConfig) {
+    asyncValidationsConfig = validationsConfig.async;
+    delete validationsConfig.async;
+  }
+
+  if ('rules' in validationsConfig) {
     validationsConfig = validationsConfig.rules;
   }
 
   const [validationDeps, validations] = extractValidationDeps(validationsConfig);
+  const [asyncValidations, asyncErrorsStrategy] = extractAsyncValidations(asyncValidationsConfig);
 
   return {
     attrs: config.initial,
@@ -31,6 +42,8 @@ export function resolveConfig(config) {
     validations,
     validationDeps,
     validationStrategy,
+    asyncValidations,
+    asyncErrorsStrategy,
     helpers: Array.isArray(config.helpers) ? config.helpers : (config.helpers ? [config.helpers] : [])
   };
 }
@@ -54,6 +67,22 @@ function extractValidationDeps(validationsConfig) {
   }
 
   return [inputDeps, validations];
+}
+
+function extractAsyncValidations(validationsConfig) {
+  let validations = { ...validationsConfig };
+  let errorsStrategy = 'takeFirst';
+
+  if ('errorsStrategy' in validations) {
+    errorsStrategy = validations.errorsStrategy;
+    delete validations.errorsStrategy;
+  }
+
+  if ('rules' in validations) {
+    validations = validations.rules;
+  }
+
+  return [validations, errorsStrategy];
 }
 
 function mergeValidations(validations1, validations2) {
@@ -98,6 +127,8 @@ export function mergeConfigs(config1, config2) {
     validations: mergeValidations(resConfig1.validations, resConfig2.validations),
     validationDeps: mergeValidationDeps(resConfig1.validationDeps, resConfig2.validationDeps),
     validationStrategy: config2.validationStrategy || config1.validationStrategy,
+    asyncValidations: mergeValidations(resConfig1.asyncValidations, resConfig2.asyncValidations),
+    asyncErrorsStrategy: config2.asyncErrorsStrategy || config1.asyncErrorsStrategy,
     helpers: [...resConfig1.helpers, ...resConfig2.helpers]
   };
 }
