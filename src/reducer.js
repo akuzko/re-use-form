@@ -296,7 +296,7 @@ export default function reducer(state, action) {
 
       return {
         ...state,
-        validating: false,
+        validating: null,
         errors: {
           ...errors,
           ...validationErrors
@@ -354,7 +354,7 @@ export function init(config, secondaryConfig) {
     configs: [fullConfig],
     isPristine: true,
     isValidated: false,
-    validating: false,
+    validating: null,
     ...fullConfig
   };
 }

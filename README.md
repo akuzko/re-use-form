@@ -515,6 +515,117 @@ function OrderForm() {
 
 ````
 
+#### Asynchronous Validation
+
+Starting from version `3.9.0`, `re-use-form` provides support for asynchronous
+validation. Following basic rules apply for async validation:
+
+- async validation is executed only if "local" (non-async) validation yields
+  no errors.
+- async validation functions have to return `Promise` objects that reject
+  with an error message in case if validation fails.
+- all async validation routines are executed in parallel.
+- async validations are not executed as part of validation `onChange` strategy (see bellow),
+  i.e. they can be called only explicitly via `validate()` or `validate(inputName)`
+  helper function calls.
+
+Since `re-use-form` has to know which validations are asynchronous ones, they
+have to be declared within `sync` property of validations config object, like so:
+
+```js
+defValidation('checkEmail', (value, { message }) => {
+  if (!value) return;
+
+  apiClient.checkEmail(value)
+    .then((data) => {
+      if (!data.isValid) {
+        return Promise.reject(message || data.message || 'This email cannot be used');
+      }
+    })
+});
+
+function UserForm() {
+  const { $ } = useForm({
+    initial: { email: '', fullName: '' },
+    validations: {
+      rules: {
+        email: 'presence',
+        fullName: 'presence'
+      },
+      async: {
+        email: 'checkEmail'
+      }
+    }
+  });
+}
+````
+
+With such setup, async `checkEmail` validation will be executed whenever
+`validate` helper is called with no arguments (to fully validate form attribues)
+or as `validate('email')` to validate email input standalone.
+
+**NOTE:** when validating form, standard validation errors will be rendered
+immediately without waiting for async validations to finish their work.
+However, validation promise object, returned by `validate` helper, will be settled
+**only when all async validations are settled**.
+
+In order to get the status on ongoing async validation, one can use
+`validating` object provided by form helper. If there is nothing being
+validated at the moment, the value of this property will be `null` to allow
+`validating && ...` shortcuts.
+
+
+##### Dealing with multiple async errors
+
+Since `re-use-form` will trigger all async validations in parallel, one
+might be interested in all of received error messages, not only in the first
+one, which is rendered by default. This behavior can be controlled by
+`errorsStrategy` async validation config property:
+
+
+```js
+function UserForm() {
+  const { $ } = useForm({
+    initial: { email: '', fullName: '' },
+    validations: {
+      rules: {
+        email: 'presence',
+        fullName: 'presence'
+      },
+      async: {
+        rules: {
+          email: ['checkEmailUniqueness', 'checkEmailBlacklist']
+        },
+        errorsStrategy: 'join'
+      }
+    }
+  });
+}
+```
+
+The possible values are:
+- `'takeFirst'` (default) - renders only first error message.
+- `'join'` - joins all error messages with semicolon (`'; '`) string.
+- a custom function that takes `errors` array as the only argument and returns
+  a single error message string.
+
+##### Skipping async validation
+
+Since at the end of the user flow all async-related validation may have
+been already passed, one may decide to avoid additional calls on final
+submit. This can be done by passing options object to `validate` helper
+function call with `async` property set to `false`:
+
+```js
+const handleSubmit = () => {
+  validate({ async: false })
+    .then((attrs) => sendRequest(attrs));
+}
+````
+
+This works for standalone input validation as well: `validate('email', { async: false })`
+to trigger only "local" input validations.
+
 #### `withValidation` Helper
 
 It's pretty common to perform some action as soon as form has no errors and
@@ -773,7 +884,7 @@ function OrderEditor() {
 ```jsx
 const onSet = useCallback((setAttrs) => {
   setAttrs({ validate: false });
-})
+}, []);
 
 return (
   <FormProvider
@@ -906,15 +1017,22 @@ export function Form() {
   currently set.
 - `isPristine` - boolean flag indicating whether or not form attributes were
   changed. Gets back to `true` on `reset` helper call.
-- `validate()` - performs form validations. Return a promise-like object that
+- `validate([options])` - performs form validations. Return a promise-like object that
   responds to `then` and `catch` methods. On successful validation, resolves
   promise with form attributes. On failed validation, rejects promise with
   validation errors. It is safe to omit `catch` clause - no exception will
   leak outside.
-- `validate(name)` - validates a single input. Just like form validation,
+  Optional `options` argument can be used to skip asynchronous validations if
+  one was defined by passing `{ async: false }` as options.
+- `validate(name, [options])` - validates a single input. Just like form validation,
   can be chained with `then` and `catch` callbacks. On successful validation,
   resolves promise with input value. On failed, rejects promise with errors
   object containing single key-value corresponding to input name and error.
+  Just like with full-scaled validation, optional `options` attribute can
+  be used to avoid async validation defined on an input.
+- `validations` - an object of the form `{ inputName: [<Promise>] }` that
+  represents ongoing async validations at the moment. If there are no async
+  validations running, will have value of `null`.
 - `withValidation(callback)` - returns a function that performs form validation
   and executes a callback if there were no errors.
 - `reset([attrsOrFn])` - clears form errors and sets form attributes provided value.
