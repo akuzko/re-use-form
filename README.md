@@ -4,7 +4,6 @@ React Form Hook
 Simple and robust form hook for [React](https://facebook.github.io/react/) with
 validation support and simple internationalization.
 
-[![build status](https://img.shields.io/travis/akuzko/re-use-form/master.svg?style=flat-square)](https://travis-ci.org/akuzko/re-use-form)
 [![npm version](https://img.shields.io/npm/v/re-use-form.svg?style=flat-square)](https://www.npmjs.com/package/re-use-form)
 
 ## Installation
