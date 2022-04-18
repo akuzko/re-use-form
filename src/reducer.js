@@ -21,7 +21,8 @@ export default function reducer(state, action) {
 
   switch (validationStrategy) {
     case 'always':
-      shouldValidateOnChange = true;
+    case 'onAnyChange':
+      shouldValidateOnChange = action.type === 'setAttr' || action.type === 'setAttrs' || action.type === 'setFullAttrs';
       break;
     case 'onAnyError':
       shouldValidateOnChange = Object.values(errors).some(Boolean);

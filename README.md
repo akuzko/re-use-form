@@ -675,9 +675,10 @@ Following strategies are supported:
 - `'onAfterValidate'` - form will validate values on change only if `validate`
   helper has been called. This flag is set to initial `false` value after
   `reset` helper call.
-- `'always'` - form will validate inputs immediately on any change. Keep in
+- `'onAnyChange'` - form will validate inputs immediately on any change. Keep in
   mind that it means that user might see error messages before they finished
-  entering their input.
+  entering their input. This especially takes place when using validation
+  with dependencies.
 - `'none'` - form will not validate inputs on change, but **will** drop any
   errors rendered on this input on change.
 
