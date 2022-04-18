@@ -529,7 +529,7 @@ validation. Following basic rules apply for async validation:
   helper function calls.
 
 Since `re-use-form` has to know which validations are asynchronous ones, they
-have to be declared within `sync` property of validations config object, like so:
+have to be declared within `async` property of validations config object, like so:
 
 ```js
 defValidation('checkEmail', (value, { message }) => {
@@ -675,6 +675,9 @@ Following strategies are supported:
 - `'onAfterValidate'` - form will validate values on change only if `validate`
   helper has been called. This flag is set to initial `false` value after
   `reset` helper call.
+- `'always'` - form will validate inputs immediately on any change. Keep in
+  mind that it means that user might see error messages before they finished
+  entering their input.
 - `'none'` - form will not validate inputs on change, but **will** drop any
   errors rendered on this input on change.
 

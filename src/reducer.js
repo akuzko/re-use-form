@@ -19,18 +19,24 @@ export default function reducer(state, action) {
   let shouldValidateOnChange = false;
   let justDropError = false;
 
-  if (validationStrategy === 'onAnyError') {
-    shouldValidateOnChange = Object.values(errors).some(Boolean);
-  } else if (validationStrategy === 'onAfterValidate') {
-    shouldValidateOnChange = isValidated;
-
-    if (!isValidated) {
+  switch (validationStrategy) {
+    case 'always':
+      shouldValidateOnChange = true;
+      break;
+    case 'onAnyError':
+      shouldValidateOnChange = Object.values(errors).some(Boolean);
+      break;
+    case 'onAfterValidate':
+      shouldValidateOnChange = isValidated;
+      if (!isValidated) {
+        justDropError = true;
+      }
+      break;
+    case 'none':
       justDropError = true;
-    }
-  } else if (validationStrategy === 'none') {
-    justDropError = true;
-  } else {
-    throw new Error(`Invalid validate on change validation strategy '${validationStrategy}'`);
+      break;
+    default:
+      throw new Error(`Invalid validate on change validation strategy '${validationStrategy}'`);
   }
 
   switch (action.type) {

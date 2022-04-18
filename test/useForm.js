@@ -649,6 +649,14 @@ describe('useForm', () => {
           expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
         });
       });
+
+      describe('always', () => {
+        it('immediately validates input on change', () => {
+          const wrapper = mount(<Form validationStrategy="always" />);
+          wrapper.find('.foo input').simulate('change', { target: { value: '' } });
+          expect(wrapper.find('.foo .error')).to.have.lengthOf(1);
+        });
+      });
     });
 
     describe('async validation', () => {
